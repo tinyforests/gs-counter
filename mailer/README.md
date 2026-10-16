@@ -1,6 +1,7 @@
 # Counter sign-in email delivery
 
-Dogfood deployment: https://tinyforests.github.io/gs-counter/
+Current live deployment: https://gs-counter.gardenerandson.chatgpt.site/
+Planned GitHub Pages target: https://tinyforests.github.io/gs-counter/ (activation pending)
 Supabase: etusezzqkjvbyackadag (Sydney).
 Initial steward/admin: tyson@gardenerandson.com.
 Workspace sender: hello@lundbech.me, display name Gardener & Son — Counter.

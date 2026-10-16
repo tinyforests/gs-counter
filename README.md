@@ -2,7 +2,9 @@
 
 Studio sales and stock for Gardener & Son.
 
-- Dogfood site: https://tinyforests.github.io/gs-counter/
+- Current live site: https://gs-counter.gardenerandson.chatgpt.site/
+- GitHub Pages target (not activated): https://tinyforests.github.io/gs-counter/
+- Pages activation is blocked by the current GitHub plan while this repo is private. After activation, update Supabase allowed redirects and the Apps Script COUNTER_URL to the Pages address.
 - Local checkout: `/Users/tyson/Projects/gs-counter`
 - Supabase project: `etusezzqkjvbyackadag` (Sydney)
 - Initial steward/admin: `tyson@gardenerandson.com`
