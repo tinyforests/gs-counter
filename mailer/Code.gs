@@ -1,5 +1,5 @@
 /** G&S Counter — private Apps Script mail worker. No public web deployment. */
-const COUNTER_URL = 'https://gs-counter.gardenerandson.chatgpt.site/';
+const COUNTER_URL = 'https://tinyforests.github.io/gs-counter/';
 const SUPABASE_URL = 'https://etusezzqkjvbyackadag.supabase.co';
 const PUBLIC_API_KEY = 'sb_publishable_l39cEER1HlCOOZ_rBXS9HQ_EElvijk5';
 
