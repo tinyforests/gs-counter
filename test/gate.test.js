@@ -1,0 +1,20 @@
+const {JSDOM}=require('jsdom');const fs=require('fs');const path=require('path').join(__dirname,'..')+'/';
+function run(label,session,stewardRows){
+  const T={stewards:stewardRows,items:[],sales:[],movements:[]};
+  const from=table=>{const q={_f:[],select(){return q;},order(){return q;},limit(){return q;},eq(c,v){q._f.push(r=>String(r[c])===String(v));return q;},
+    maybeSingle(){const rows=T[table].filter(r=>q._f.every(f=>f(r)));return Promise.resolve({data:rows[0]||null,error:null});},
+    insert(){return q;},update(){return q;},then(res){return Promise.resolve({data:T[table],error:null}).then(res);}};return q;};
+  const sbClient={from,channel(){const c={on(){return c;},subscribe(){return c;}};return c;},
+    auth:{getSession:async()=>({data:{session}}),onAuthStateChange(){},signInWithOtp:async()=>({error:null}),signOut:async()=>({error:null})}};
+  const html=fs.readFileSync(path+'index.html','utf8').replace(/<script src="https:\/\/cdn[^"]*"><\/script>/,'').replace('<script src="config.js"></script>','')
+    .replace('<script src="backend.js"></script>','<script>'+fs.readFileSync(path+'backend.js','utf8')+'</script>');
+  const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'https://counter.gardenerandson.com/',beforeParse(w){
+    w.GS_CONFIG={SUPABASE_URL:'x',SUPABASE_ANON_KEY:'y',STUDIOS:[{id:'mont-albert',name:'Mont Albert',addr:'2 Churchill Street'}]};
+    w.supabase={createClient:()=>sbClient}; w.crypto={randomUUID:()=>'id'+Math.random()};
+  }});
+  setTimeout(()=>{const g=dom.window.document.getElementById('gsGate');
+    console.log(label+':', g? g.querySelector('h1').textContent+' | '+(g.querySelector('.lede')||{}).textContent.slice(0,60) : 'no gate (signed in)');},250);
+}
+run('no session',null,[]);
+run('not allowed',{user:{id:'u2',email:'random@example.com'}},[{email:'hello@lundbech.me',role:'admin'}]);
+run('allowed',{user:{id:'u1',email:'hello@lundbech.me'}},[{email:'hello@lundbech.me',role:'admin'}]);

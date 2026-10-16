@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>G&amp;S Counter — Steward Sales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#3d4535; --beige:#fff0dc; --signal:#7C9A52; --brass:#B49A63; --clay:#9A6A4F;
+  --bg:#fff0dc; --ink:#3d4535; --ink-soft:#5f6857; --panel:#fbe6c8; --line:#3d45352e;
+  --btn-bg:#3d4535; --btn-ink:#fff0dc; --accent:#7C9A52; --danger:#9A6A4F;
+  --display:"Abril Fatface", Georgia, "Times New Roman", serif;
+  --sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (max-width:560px){.cat-row{grid-template-columns:1fr 1fr;}}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#262b21; --ink:#fff0dc; --ink-soft:#d8c9b2; --panel:#31372b; --line:#fff0dc2b;
+    --btn-bg:#fff0dc; --btn-ink:#3d4535; --accent:#9dbb74; --danger:#c9927a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#262b21; --ink:#fff0dc; --ink-soft:#d8c9b2; --panel:#31372b; --line:#fff0dc2b;
+  --btn-bg:#fff0dc; --btn-ink:#3d4535; --accent:#9dbb74; --danger:#c9927a;
+}
+*{box-sizing:border-box;border-radius:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.45;min-height:100vh;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:640px;margin:0 auto;padding:0 20px 120px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0 14px;border-bottom:2px solid var(--ink)}
+.brand{font-family:var(--display);font-size:24px;letter-spacing:.01em;line-height:1}
+.brand em{font-style:normal;color:var(--accent)}
+.top-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.chip{background:transparent;border:1px solid var(--line);padding:7px 11px;font-size:14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.studio-line{font-family:var(--mono);font-size:13px;color:var(--ink-soft);padding:10px 0 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.studio-line button{background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;color:var(--ink-soft);font:inherit}
+
+/* steps */
+.steps{display:flex;gap:4px;margin:22px 0 26px}
+.steps span{flex:1;height:4px;background:var(--line)}
+.steps span.on{background:var(--accent)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(34px,8vw,48px);line-height:1.02;margin:0 0 8px}
+.lede{color:var(--ink-soft);margin:0 0 24px;max-width:46ch}
+
+label.field{display:block;margin-bottom:18px}
+label.field span{display:block;font-size:14px;color:var(--ink-soft);margin-bottom:6px}
+input.big{width:100%;padding:16px 14px;font-size:22px;background:var(--panel);border:0;border-bottom:2px solid var(--ink);outline:none}
+input.big:focus{border-bottom-color:var(--accent)}
+input.small{width:100%;padding:12px;background:var(--panel);border:0;border-bottom:2px solid var(--ink);outline:none}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;padding:0 22px;background:var(--btn-bg);color:var(--btn-ink);border:0;font-weight:600;font-size:17px;cursor:pointer}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.btn.text{background:transparent;color:var(--ink-soft);min-height:44px;padding:0 6px;text-decoration:underline;font-weight:400}
+.btn.wide{width:100%}
+.row{display:flex;gap:10px;align-items:center}
+.row.split{justify-content:space-between}
+.actions{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+.actions .btn:last-child{flex:1}
+
+/* suggestions */
+.suggest{border-top:1px solid var(--line);margin:-8px 0 18px}
+.suggest button{display:flex;justify-content:space-between;width:100%;text-align:left;padding:13px 4px;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer}
+.suggest button:hover{background:var(--panel)}
+.suggest small{font-family:var(--mono);color:var(--ink-soft);font-size:12px}
+
+/* items */
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:16px}
+.item{position:relative;text-align:left;background:var(--panel);border:0;border-left:4px solid var(--brass);padding:14px 12px 12px;cursor:pointer;min-height:86px;display:flex;flex-direction:column;justify-content:space-between}
+.item.in{border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--panel))}
+.item b{font-weight:500;line-height:1.2}
+.item .price{font-family:var(--mono);font-size:15px;margin-top:8px}
+.item .qty{position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;font-family:var(--mono);font-size:13px;min-width:24px;height:24px;display:grid;place-items:center;padding:0 5px}
+.empty{padding:18px;background:var(--panel);color:var(--ink-soft);margin-bottom:16px}
+
+.basket{border-top:2px solid var(--ink);margin-top:10px}
+.line{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.line .name{flex:1}
+.line .amt{font-family:var(--mono);min-width:72px;text-align:right}
+.qtybtn{width:40px;height:40px;background:transparent;border:1px solid var(--line);cursor:pointer;font-size:20px;line-height:1}
+.qtyn{font-family:var(--mono);min-width:22px;text-align:center}
+.total{display:flex;justify-content:space-between;align-items:baseline;padding:16px 0 4px}
+.total .lbl{font-size:15px;color:var(--ink-soft)}
+.total .num{font-family:var(--mono);font-size:30px;font-weight:500}
+
+details.custom{margin:6px 0 10px}
+details.custom summary{cursor:pointer;color:var(--ink-soft);padding:8px 0;list-style:none}
+details.custom summary::before{content:"+ ";}
+.custom-grid{display:grid;grid-template-columns:1fr 110px auto;gap:8px;align-items:end;padding:8px 0}
+
+/* payment */
+.pay{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pay button{min-height:92px;background:var(--panel);border:2px solid transparent;cursor:pointer;font-size:19px;font-weight:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.pay button small{font-size:12px;color:var(--ink-soft);font-weight:400}
+.pay button[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in srgb,var(--accent) 18%,var(--panel))}
+.summary{background:var(--panel);padding:16px;margin-bottom:18px}
+.summary .who{font-weight:600}
+.summary .meta{font-family:var(--mono);font-size:13px;color:var(--ink-soft)}
+
+/* done */
+.done{text-align:left;padding-top:30px}
+.ring{width:110px;height:110px;border:2px solid var(--accent);border-radius:50% !important;display:grid;place-items:center;margin-bottom:26px;position:relative}
+.ring::after{content:"";position:absolute;inset:12px;border:1px solid var(--accent);border-radius:50%}
+.ring svg{width:40px;height:40px;stroke:var(--accent)}
+
+/* today / log */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:8px 0 22px}
+.stats div{background:var(--bg);padding:14px 12px}
+.stats b{display:block;font-family:var(--mono);font-size:22px;font-weight:500}
+.stats span{font-size:13px;color:var(--ink-soft)}
+.tbl-wrap{overflow-x:auto}
+.sale{padding:14px 0;border-bottom:1px solid var(--line)}
+.sale .row.split{align-items:baseline}
+.sale .t{font-family:var(--mono);font-size:13px;color:var(--ink-soft)}
+.sale .amt{font-family:var(--mono);font-size:18px}
+.sale .its{font-size:15px;color:var(--ink-soft)}
+.tag{font-family:var(--mono);font-size:12px;border:1px solid var(--line);padding:2px 6px;margin-left:6px}
+.void{color:var(--danger);background:none;border:0;cursor:pointer;font-size:13px;text-decoration:underline;padding:4px 0}
+.voided{opacity:.45;text-decoration:line-through}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+
+/* settings */
+.cat-row{display:grid;grid-template-columns:1fr 104px 84px 78px 44px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.cat-row input{padding:10px;background:var(--panel);border:0;border-bottom:1px solid var(--ink)}
+.x{width:44px;height:44px;background:none;border:1px solid var(--line);cursor:pointer;color:var(--danger);font-size:18px}
+
+.stock-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.stock-row .nm{flex:1;line-height:1.25}
+.stock-row .nm small{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+.stock-row .on{font-family:var(--mono);font-size:20px;min-width:46px;text-align:right}
+.stock-row.low .on{color:var(--danger);font-weight:500}
+.stock-row input.cnt{width:76px;padding:11px 8px;background:var(--panel);border:0;border-bottom:2px solid var(--ink);text-align:right;font-family:var(--mono)}
+.scanbar{display:flex;gap:8px;margin-bottom:14px}
+.scanbar input{flex:1;padding:14px 12px;background:var(--panel);border:0;border-bottom:2px solid var(--ink);outline:none;font-family:var(--mono);font-size:17px}
+.scanbar input:focus{border-bottom-color:var(--accent)}
+.item .sku{font-family:var(--mono);font-size:11px;color:var(--ink-soft);letter-spacing:.04em}
+.banner{background:color-mix(in srgb,var(--danger) 16%,var(--panel));border-left:4px solid var(--danger);padding:12px 14px;margin:14px 0;font-size:15px}
+.item .left{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-top:2px}
+.item .left.low{color:var(--danger)}
+.mv{padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
+.mv .t{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+.studio-pick{display:grid;gap:10px;margin-top:10px}
+.studio-pick button{min-height:84px;text-align:left;padding:16px 18px;background:var(--panel);border:0;border-left:4px solid var(--brass);cursor:pointer}
+.studio-pick button b{font-family:var(--display);font-weight:400;font-size:26px;display:block;line-height:1.1}
+.studio-pick button small{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+
+.note{font-size:14px;color:var(--ink-soft);margin-top:10px}
+#gsGate{position:fixed;inset:0;background:var(--bg);z-index:20;display:grid;place-items:start center;padding:8vh 20px;overflow:auto}
+#gsGate .gate-card{width:100%;max-width:440px}
+#gsGate .brand{font-family:var(--display);font-size:24px;margin-bottom:36px}
+#gsGate .brand em{font-style:normal;color:var(--accent)}
+#gsGate h1{font-size:clamp(34px,8vw,46px)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;font-size:15px;z-index:9;max-width:90vw}
+.hidden{display:none !important}
+h2{font-family:var(--display);font-weight:400;font-size:30px;margin:26px 0 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Gardener <em>&amp;</em> Son</div>
+    <nav class="top-actions" id="nav">
+      <button class="chip" data-view="sale" aria-pressed="true">New sale</button>
+      <button class="chip" data-view="log">Sales</button>
+      <button class="chip" data-view="stock">Stock</button>
+      <button class="chip" data-view="settings">Items</button>
+    </nav>
+  </header>
+  <div class="studio-line" id="studioLine"></div>
+  <main id="app"><p class="note">Opening the counter…</p></main>
+</div>
+<div class="toast hidden" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="backend.js"></script>
+<script>
+window.addEventListener("error", e => {
+  const app = document.getElementById("app");
+  if (app && /Opening the counter/.test(app.textContent)) {
+    app.innerHTML = '<h1>Something broke opening the counter.</h1><p class="lede">Tell Tyson what this says:<br><code>' +
+      String((e && e.message) || "unknown error") + '</code></p>';
+  }
+});
+(() => {
+  const STUDIOS = (window.GS_CONFIG && window.GS_CONFIG.STUDIOS) || [];
+  const METHODS = [
+    { id: "card", label: "Card", sub: "EFTPOS / tap" },
+    { id: "square", label: "Square", sub: "Square reader" },
+    { id: "cash", label: "Cash", sub: "Into the tin" },
+    { id: "invoice", label: "Invoice", sub: "Pay later" },
+  ];
+
+  const $app = document.getElementById("app");
+  const $nav = document.getElementById("nav");
+  const $studioLine = document.getElementById("studioLine");
+  const $toast = document.getElementById("toast");
+
+  const S = {
+    db: null, dbReady: false, dbFailed: false, canWrite: true, uid: null,
+    downloads: null,
+    view: "sale", step: 0,
+    studio: loadLocal("gs-studio"),
+    items: [], sales: [], moves: [],
+    draft: freshDraft(),
+    logFilter: "today", stockMode: null, counts: {}, scan: "",
+    saving: false,
+  };
+
+  function freshDraft(){ return { name: "", phone: "", email: "", lines: [], method: null, note: "" }; }
+  function loadLocal(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+  function saveLocal(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const money = n => "$" + (Math.round((Number(n)||0)*100)/100).toLocaleString("en-AU",{minimumFractionDigits: Number(n)%1 ? 2 : 0, maximumFractionDigits:2});
+  const studioName = id => (STUDIOS.find(s => s.id === id) || {}).name || "—";
+  const methodLabel = id => (METHODS.find(m => m.id === id) || {}).label || id;
+  const total = lines => lines.reduce((a,l) => a + l.price * l.qty, 0);
+  function toast(msg){ $toast.textContent = msg; $toast.classList.remove("hidden"); clearTimeout(toast.t); toast.t = setTimeout(()=> $toast.classList.add("hidden"), 2600); }
+  const dayKey = d => { const x = new Date(d); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0"); };
+
+  /* ---------- SKU ---------- */
+  const cleanSku = v => String(v||"").replace(/[^0-9]/g,"").slice(0,5);
+  // next free number, zero-padded to three — 001, 002, 003…
+  function nextNumber(){
+    const used = (S.usedNumbers || []).concat(S.items.map(i => parseInt(i.sku, 10))).filter(n => n > 0);
+    const n = (used.length ? Math.max(...used) : 0) + 1;
+    return String(n).padStart(3, "0");
+  }
+  const bySku = code => { const c = cleanSku(code); return c ? S.items.find(i => parseInt(i.sku,10) === parseInt(c,10)) : null; };
+
+  /* ---------- stock helpers ---------- */
+  const onHand = (item, studio) => {
+    const v = item && item.stock ? item.stock[studio || S.studio] : undefined;
+    return typeof v === "number" ? v : null;   // null = not tracked here
+  };
+  const isLow = item => { const n = onHand(item); return n !== null && n <= (Number(item.lowAt) || 0); };
+  const lowItems = () => S.items.filter(isLow);
+
+  async function setStock(itemId, studio, n, extra){
+    await S.db.doc("items/" + itemId).update(Object.assign({ stock: { [studio]: n } }, extra || {}));
+  }
+  // dir 1 = sold (out), -1 = restored (back in)
+  async function moveStockForSale(sale, dir){
+    for (const l of (sale.lines || [])) {
+      if (!l.itemId) continue;
+      const it = S.items.find(i => i.id === l.itemId);
+      const cur = onHand(it, sale.studio);
+      if (cur === null) continue;
+      try { await setStock(l.itemId, sale.studio, Math.round((cur - dir * l.qty) * 100) / 100); } catch(e){ console.warn(e); }
+    }
+  }
+  async function logMovement(doc){
+    try { await S.db.collection("movements").add(Object.assign({ at: Date.now(), studio: S.studio, by: S.uid || null }, doc)); }
+    catch(e){ console.warn(e); }
+  }
+
+  /* ---------- capabilities ---------- */
+  async function boot(){
+    render();
+    if (!window.claude || !window.claude.use) { S.dbFailed = true; render(); return; }
+    const [db, user, downloads] = await Promise.all([
+      window.claude.use("db"), window.claude.use("user"), window.claude.use("downloads")
+    ]);
+    S.downloads = downloads;
+    if (user) {
+      try { S.uid = await user.id(); } catch(e){}
+      try { const c = await user.can("data.write"); if (c === false) S.canWrite = false; } catch(e){}
+    }
+    if (!db) { S.dbFailed = true; render(); return; }
+    S.db = db;
+    db.collection("items").onSnapshot(snap => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      S.usedNumbers = all.map(i => parseInt(i.sku,10)).filter(n => n > 0);
+      S.items = all.filter(i => !i.archived)
+        .sort((a,b) => (a.name||"").localeCompare(b.name||""));
+      S.dbReady = true; safeRender();
+    }, err => { console.warn(err); });
+    db.collection("movements").orderBy("at","desc").limit(100).onSnapshot(snap => {
+      S.moves = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      safeRender();
+    }, err => { console.warn(err); });
+    db.collection("sales").orderBy("createdAt","desc").limit(500).onSnapshot(snap => {
+      S.sales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      S.dbReady = true; safeRender();
+    }, err => { console.warn(err); });
+  }
+
+  // live data never wipes what a steward is typing
+  function safeRender(){
+    const typing = (S.studio && S.view === "sale" && (S.step === 0 || S.step === 1 || S.step === 3))
+      || (S.view === "stock" && S.stockMode === "count");
+    if (typing) renderChrome(); else render();
+  }
+
+  /* ---------- nav ---------- */
+  $nav.addEventListener("click", e => {
+    const b = e.target.closest("[data-view]"); if (!b) return;
+    S.view = b.dataset.view;
+    if (S.view === "sale" && S.step === 4) { S.step = 0; S.draft = freshDraft(); }
+    render();
+  });
+
+  function renderChrome(){
+    [...$nav.children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === S.view)));
+    if (S.studio) {
+      const today = S.sales.filter(s => !s.voided && s.studio === S.studio && dayKey(s.createdAt) === dayKey(Date.now()));
+      const low = lowItems().length;
+      $studioLine.innerHTML = `<span>${esc(studioName(S.studio))} · today ${money(today.reduce((a,s)=>a+s.total,0))} from ${today.length} sale${today.length===1?"":"s"}${low ? ` · ${low} item${low===1?"":"s"} low` : ""}</span><span><button id="changeStudio">Change studio</button> · <button id="signOut">Sign out</button></span>`;
+      document.getElementById("changeStudio").onclick = () => { S.studio = null; render(); };
+      document.getElementById("signOut").onclick = () => { if (confirm("Sign out of the counter on this device?")) window.GS_SIGN_OUT(); };
+    } else $studioLine.innerHTML = "";
+  }
+
+  /* ---------- main render ---------- */
+  function render(){
+    renderChrome();
+    if (S.dbFailed) {
+      $app.innerHTML = `<h1>The counter can't reach the sales book.</h1><p class="lede">The connection to the database failed. Check you're online and reload. If it keeps happening, tell Tyson.</p>`;
+      return;
+    }
+    if (!S.studio) return renderStudioPick();
+    if (S.view === "log") return renderLog();
+    if (S.view === "stock") return renderStock();
+    if (S.view === "settings") return renderSettings();
+    return renderSale();
+  }
+
+  function renderStudioPick(){
+    $app.innerHTML = `
+      <div class="steps"><span class="on"></span></div>
+      <h1>Which studio are you in today?</h1>
+      <p class="lede">This device will remember it. Every sale gets tagged to the studio.</p>
+      <div class="studio-pick">
+        ${STUDIOS.map(s => `<button data-studio="${s.id}"><b>${esc(s.name)}</b><small>${esc(s.addr)}</small></button>`).join("")}
+      </div>`;
+    $app.querySelectorAll("[data-studio]").forEach(b => b.onclick = () => {
+      S.studio = b.dataset.studio; saveLocal("gs-studio", S.studio); render();
+    });
+  }
+
+  function stepBar(n){ return `<div class="steps">${[0,1,2,3].map(i=>`<span class="${i<=n?"on":""}"></span>`).join("")}</div>`; }
+
+  function renderSale(){
+    if (S.step === 0) return stepName();
+    if (S.step === 1) return stepContact();
+    if (S.step === 2) return stepItems();
+    if (S.step === 3) return stepPay();
+    return stepDone();
+  }
+
+  /* known customers from past sales */
+  function knownCustomers(){
+    const map = new Map();
+    for (const s of S.sales) {
+      if (!s.customerName || s.customerName === "Walk-in") continue;
+      const k = s.customerName.trim().toLowerCase();
+      const cur = map.get(k);
+      if (!cur) map.set(k, { name: s.customerName, phone: s.phone||"", email: s.email||"", count: 1, last: s.createdAt });
+      else { cur.count++; if (!cur.phone && s.phone) cur.phone = s.phone; if (!cur.email && s.email) cur.email = s.email; }
+    }
+    return [...map.values()];
+  }
+
+  function stepName(){
+    const d = S.draft;
+    $app.innerHTML = `
+      ${stepBar(0)}
+      <h1>Who's buying?</h1>
+      <p class="lede">Start typing. Anyone who's bought before will come up.</p>
+      <label class="field"><span>Customer name</span>
+        <input class="big" id="name" autocomplete="off" value="${esc(d.name)}" placeholder="First and last name"></label>
+      <div class="suggest" id="suggest"></div>
+      <div class="actions">
+        <button class="btn ghost" id="walkin">Walk-in, no name</button>
+        <button class="btn" id="next" ${d.name.trim()?"":"disabled"}>Next</button>
+      </div>`;
+    const $n = document.getElementById("name"), $next = document.getElementById("next"), $sg = document.getElementById("suggest");
+    const drawSuggest = () => {
+      const known = knownCustomers();
+      const q = $n.value.trim().toLowerCase();
+      if (q.length < 2) { $sg.innerHTML = ""; return; }
+      const hits = known.filter(c => c.name.toLowerCase().includes(q)).slice(0,4);
+      $sg.innerHTML = hits.map((c,i) => `<button data-i="${i}"><span>${esc(c.name)}</span><small>${c.count} visit${c.count===1?"":"s"}</small></button>`).join("");
+      $sg.querySelectorAll("button").forEach(b => b.onclick = () => {
+        const c = hits[+b.dataset.i];
+        Object.assign(S.draft, { name: c.name, phone: c.phone, email: c.email });
+        S.step = 2; render();
+      });
+    };
+    $n.oninput = () => { S.draft.name = $n.value; $next.disabled = !$n.value.trim(); drawSuggest(); };
+    $n.onkeydown = e => { if (e.key === "Enter" && $n.value.trim()) { S.step = 1; render(); } };
+    $next.onclick = () => { S.step = 1; render(); };
+    document.getElementById("walkin").onclick = () => { Object.assign(S.draft, { name: "Walk-in", phone: "", email: "" }); S.step = 2; render(); };
+    drawSuggest();
+    setTimeout(() => $n.focus(), 30);
+  }
+
+  function stepContact(){
+    const d = S.draft;
+    $app.innerHTML = `
+      ${stepBar(1)}
+      <h1>How do we reach ${esc(d.name.split(" ")[0])}?</h1>
+      <p class="lede">Either one is fine. Ask if they'd like to hear about workshops and new stock.</p>
+      <label class="field"><span>Phone</span><input class="big" id="phone" type="tel" inputmode="tel" autocomplete="off" value="${esc(d.phone)}" placeholder="04xx xxx xxx"></label>
+      <label class="field"><span>Email</span><input class="big" id="email" type="email" inputmode="email" autocomplete="off" value="${esc(d.email)}" placeholder="name@example.com"></label>
+      <div class="actions">
+        <button class="btn ghost" id="back">Back</button>
+        <button class="btn text" id="skip">Skip</button>
+        <button class="btn" id="next">Next</button>
+      </div>`;
+    const $p = document.getElementById("phone"), $e = document.getElementById("email");
+    $p.oninput = () => S.draft.phone = $p.value;
+    $e.oninput = () => S.draft.email = $e.value;
+    document.getElementById("back").onclick = () => { S.step = 0; render(); };
+    document.getElementById("skip").onclick = () => { S.draft.phone = ""; S.draft.email = ""; S.step = 2; render(); };
+    document.getElementById("next").onclick = () => {
+      const em = S.draft.email.trim();
+      if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { toast("That email doesn't look right."); $e.focus(); return; }
+      S.step = 2; render();
+    };
+    setTimeout(() => $p.focus(), 30);
+  }
+
+  function addLine(it){
+    const d = S.draft, l = d.lines.find(x => x.itemId === it.id);
+    if (l) l.qty++;
+    else d.lines.push({ itemId: it.id, name: it.name, price: Number(it.price)||0, qty: 1 });
+  }
+  function visibleItems(){
+    const q = (S.scan||"").trim().toLowerCase();
+    if (!q) return S.items;
+    return S.items.filter(i => (i.name||"").toLowerCase().includes(q) || (i.sku||"").toLowerCase().includes(q));
+  }
+  // re-render the grid without stealing focus from the scan box
+  function renderScanOnly(){
+    const grid = $app.querySelector(".items");
+    if (!grid) { render(); const el = document.getElementById("scan"); if (el) el.focus(); return; }
+    render();
+    const el = document.getElementById("scan");
+    if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+  }
+
+  function stepItems(){
+    const d = S.draft;
+    const qtyOf = id => (d.lines.find(l => l.itemId === id) || {}).qty || 0;
+    const t = total(d.lines);
+    $app.innerHTML = `
+      ${stepBar(2)}
+      <h1>What are they taking?</h1>
+      <p class="lede">Tap an item, or type the number off its tag.</p>
+      <div class="scanbar"><input id="scan" placeholder="Tag number or name" autocomplete="off" value="${esc(S.scan||"")}"></div>
+      ${!S.dbReady ? `<div class="empty">Loading items…</div>` :
+        visibleItems().length ? `<div class="items">${visibleItems().map(i => {
+          const q = qtyOf(i.id);
+          const h = onHand(i);
+          const left = h === null ? "" : `<span class="left ${isLow(i)?"low":""}">${h - q} left${h - q <= 0 ? " — out of stock" : ""}</span>`;
+          return `<button class="item ${q?"in":""}" data-id="${esc(i.id)}"><b>${esc(i.name)}</b>${i.sku?`<span class="sku">${esc(i.sku)}</span>`:""}${left}<span class="price">${money(i.price)}</span>${q?`<span class="qty">×${q}</span>`:""}</button>`;
+        }).join("")}</div>` :
+        `<div class="empty">${S.scan ? "Nothing matches that." : "No items yet. Add one below, or set up the list under <b>Items</b>."}</div>`}
+      <details class="custom" ${S.items.length?"":"open"}>
+        <summary>Something not on the list</summary>
+        <div class="custom-grid">
+          <label class="field" style="margin:0"><span>Item</span><input class="small" id="cName" placeholder="e.g. Plant, 140mm"></label>
+          <label class="field" style="margin:0"><span>Price $</span><input class="small" id="cPrice" inputmode="decimal" placeholder="0"></label>
+          <button class="btn" id="cAdd" style="min-height:46px">Add</button>
+        </div>
+        <label class="row note" style="gap:8px"><input type="checkbox" id="cKeep" ${S.canWrite?"":"disabled"}> Save it to the item list too</label>
+      </details>
+      ${d.lines.length ? `<div class="basket">
+        ${d.lines.map((l,idx) => `<div class="line"><span class="name">${esc(l.name)}</span>
+          <button class="qtybtn" data-dec="${idx}" aria-label="One less">−</button><span class="qtyn">${l.qty}</span>
+          <button class="qtybtn" data-inc="${idx}" aria-label="One more">+</button>
+          <span class="amt">${money(l.price*l.qty)}</span></div>`).join("")}
+        <div class="total"><span class="lbl">Total</span><span class="num">${money(t)}</span></div>
+      </div>` : ""}
+      <div class="actions">
+        <button class="btn ghost" id="back">Back</button>
+        <button class="btn" id="next" ${d.lines.length?"":"disabled"}>Take payment · ${money(t)}</button>
+      </div>`;
+    $app.querySelectorAll(".item").forEach(b => b.onclick = () => {
+      const it = S.items.find(i => i.id === b.dataset.id); if (!it) return;
+      addLine(it); render();
+    });
+    $app.querySelectorAll("[data-inc]").forEach(b => b.onclick = () => { d.lines[+b.dataset.inc].qty++; render(); });
+    $app.querySelectorAll("[data-dec]").forEach(b => b.onclick = () => {
+      const i = +b.dataset.dec; d.lines[i].qty--; if (d.lines[i].qty <= 0) d.lines.splice(i,1); render();
+    });
+    const $scan = document.getElementById("scan");
+    if ($scan) {
+      $scan.oninput = () => { S.scan = $scan.value; renderScanOnly(); };
+      $scan.onkeydown = e => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        const hit = bySku($scan.value) || (visibleItems().length === 1 ? visibleItems()[0] : null);
+        if (!hit) { toast("No item with that number."); return; }
+        addLine(hit); S.scan = ""; render(); setTimeout(() => { const el = document.getElementById("scan"); if (el) el.focus(); }, 30);
+      };
+      if (S.scan) setTimeout(() => { $scan.focus(); $scan.setSelectionRange($scan.value.length, $scan.value.length); }, 20);
+    }
+    document.getElementById("cAdd").onclick = async () => {
+      const name = document.getElementById("cName").value.trim();
+      const price = parseFloat(document.getElementById("cPrice").value.replace(/[^0-9.]/g,""));
+      if (!name || !(price >= 0)) { toast("Give it a name and a price."); return; }
+      const keep = document.getElementById("cKeep").checked;
+      let itemId = null;
+      if (keep && S.db) {
+        const num = nextNumber();
+        try {
+          const ref = await S.db.collection("items").add({ name, price, sku: num, lowAt: 0, archived: false, createdAt: Date.now() });
+          itemId = ref.id;
+          toast(`Saved to the list as ${num} — write ${num} on its tag.`);
+        } catch(e){ toast("Couldn't save to the list, but it's in this sale."); }
+      }
+      d.lines.push({ itemId, name, price, qty: 1 });
+      render();
+    };
+    document.getElementById("back").onclick = () => { S.step = d.name === "Walk-in" ? 0 : 1; render(); };
+    document.getElementById("next").onclick = () => { S.step = 3; render(); };
+  }
+
+  function stepPay(){
+    const d = S.draft, t = total(d.lines);
+    const contact = [d.phone, d.email].filter(Boolean).join(" · ");
+    $app.innerHTML = `
+      ${stepBar(3)}
+      <h1>${money(t)}. How are they paying?</h1>
+      <div class="summary">
+        <div class="row split"><span class="who">${esc(d.name)}</span><span class="meta">${d.lines.reduce((a,l)=>a+l.qty,0)} item${d.lines.reduce((a,l)=>a+l.qty,0)===1?"":"s"}</span></div>
+        ${contact ? `<div class="meta">${esc(contact)}</div>` : ""}
+        <div class="meta" style="margin-top:6px">${d.lines.map(l => `${esc(l.name)}${l.qty>1?" ×"+l.qty:""}`).join(", ")}</div>
+      </div>
+      <div class="pay">
+        ${METHODS.map(m => `<button data-m="${m.id}" aria-pressed="${d.method===m.id}">${m.label}<small>${m.sub}</small></button>`).join("")}
+      </div>
+      <label class="field" style="margin-top:18px"><span>Note (optional): what they asked about, anything worth knowing</span>
+        <input class="small" id="note" value="${esc(d.note)}" placeholder="e.g. Asked about a front garden design"></label>
+      <div class="actions">
+        <button class="btn ghost" id="back">Back</button>
+        <button class="btn" id="finish" ${d.method && !S.saving && S.canWrite ?"":"disabled"}>${S.saving ? "Recording…" : "Record sale"}</button>
+      </div>
+      ${S.canWrite ? "" : `<p class="note">You can view the sales book but not record sales. Ask Tyson for interact access.</p>`}`;
+    $app.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { d.method = b.dataset.m; render(); });
+    const $note = document.getElementById("note"); $note.oninput = () => d.note = $note.value;
+    document.getElementById("back").onclick = () => { S.step = 2; render(); };
+    document.getElementById("finish").onclick = finish;
+  }
+
+  async function finish(){
+    const d = S.draft;
+    if (!S.db || S.saving || !d.method || !d.lines.length) return;
+    S.saving = true; render();
+    const now = Date.now();
+    const doc = {
+      createdAt: now, day: dayKey(now), studio: S.studio,
+      customerName: d.name.trim() || "Walk-in", phone: d.phone.trim(), email: d.email.trim(),
+      lines: d.lines.map(l => ({ itemId: l.itemId, name: l.name, price: l.price, qty: l.qty })),
+      itemCount: d.lines.reduce((a,l)=>a+l.qty,0),
+      total: Math.round(total(d.lines)*100)/100,
+      method: d.method, note: d.note.trim(), stewardId: S.uid || null, voided: false,
+    };
+    const ref = S.db.collection("sales").doc();
+    let ok = false;
+    for (let attempt = 0; attempt < 2 && !ok; attempt++) {
+      try { await ref.set(doc); ok = true; }
+      catch(e){
+        if (e && e.code === "unavailable" && attempt === 0) { await new Promise(r => setTimeout(r, 600 + Math.random()*600)); continue; }
+        if (e && e.code === "invalid_argument") { S.canWrite = false; }
+        toast(e && e.code === "quota_exceeded" ? "The sales book is full. Tell Tyson." : "Couldn't record that sale. Try again.");
+        break;
+      }
+    }
+    S.saving = false;
+    if (ok) { S.lastSale = doc; S.step = 4; moveStockForSale(doc, 1); }
+    render();
+  }
+
+  function stepDone(){
+    const s = S.lastSale || {};
+    $app.innerHTML = `
+      <div class="done">
+        <div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <h1>Recorded.</h1>
+        <p class="lede">${money(s.total)} ${esc(methodLabel(s.method)).toLowerCase()} from ${esc(s.customerName)}. ${s.method === "square" || s.method === "card" ? "Make sure the reader shows it approved." : s.method === "cash" ? "Pop it in the tin." : s.method === "invoice" ? "Let Tyson know to send the invoice." : ""}</p>
+        <div class="actions"><button class="btn wide" id="again">Next customer</button></div>
+      </div>`;
+    document.getElementById("again").onclick = () => { S.draft = freshDraft(); S.scan = ""; S.step = 0; render(); };
+  }
+
+  /* ---------- sales log ---------- */
+  function filteredSales(){
+    const now = new Date(), today = dayKey(now);
+    const weekAgo = Date.now() - 7*864e5, monthAgo = Date.now() - 30*864e5;
+    return S.sales.filter(s => {
+      if (S.logStudio && S.logStudio !== "all" && s.studio !== S.logStudio) return false;
+      if (S.logFilter === "today") return dayKey(s.createdAt) === today;
+      if (S.logFilter === "week") return s.createdAt >= weekAgo;
+      if (S.logFilter === "month") return s.createdAt >= monthAgo;
+      return true;
+    });
+  }
+
+  function renderLog(){
+    if (!S.logStudio) S.logStudio = S.studio;
+    const list = filteredSales(), live = list.filter(s => !s.voided);
+    const sum = live.reduce((a,s)=>a+s.total,0);
+    const people = new Set(live.filter(s => s.customerName !== "Walk-in").map(s => s.customerName.toLowerCase())).size;
+    const byMethod = METHODS.map(m => [m.label, live.filter(s=>s.method===m.id).reduce((a,s)=>a+s.total,0)]).filter(x=>x[1]);
+    const F = [["today","Today"],["week","7 days"],["month","30 days"],["all","All"]];
+    $app.innerHTML = `
+      <h2>Sales book</h2>
+      <div class="filters">${F.map(([k,l]) => `<button class="chip" data-f="${k}" aria-pressed="${S.logFilter===k}">${l}</button>`).join("")}</div>
+      <div class="filters">${[{id:"all",name:"Both studios"},...STUDIOS].map(s => `<button class="chip" data-s="${s.id}" aria-pressed="${S.logStudio===s.id}">${esc(s.name)}</button>`).join("")}</div>
+      <div class="stats">
+        <div><b>${money(sum)}</b><span>takings</span></div>
+        <div><b>${live.length}</b><span>sales</span></div>
+        <div><b>${people}</b><span>named customers</span></div>
+      </div>
+      ${byMethod.length ? `<p class="note" style="margin-top:-10px;margin-bottom:16px;font-family:var(--mono)">${byMethod.map(([l,v]) => `${l} ${money(v)}`).join("  ·  ")}</p>` : ""}
+      <div>${list.length ? list.map(s => `
+        <div class="sale ${s.voided?"voided":""}">
+          <div class="row split"><span><b>${esc(s.customerName)}</b><span class="tag">${esc(methodLabel(s.method))}</span>${S.logStudio==="all"?`<span class="tag">${esc(studioName(s.studio))}</span>`:""}</span><span class="amt">${money(s.total)}</span></div>
+          <div class="t">${new Date(s.createdAt).toLocaleString("en-AU",{weekday:"short",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})}${s.phone?" · "+esc(s.phone):""}${s.email?" · "+esc(s.email):""}</div>
+          <div class="its">${(s.lines||[]).map(l => `${esc(l.name)}${l.qty>1?" ×"+l.qty:""}`).join(", ")}</div>
+          ${s.note ? `<div class="its" style="color:var(--ink)">“${esc(s.note)}”</div>` : ""}
+          ${S.canWrite ? `<button class="void" data-void="${esc(s.id)}">${s.voided?"Restore":"Void (mistake / refund)"}</button>` : ""}
+        </div>`).join("") : `<div class="empty">No sales in this range yet.</div>`}</div>
+      ${S.downloads && list.length ? `<div class="actions"><button class="btn ghost wide" id="csv">Download these as CSV</button></div>` : ""}`;
+    $app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { S.logFilter = b.dataset.f; render(); });
+    $app.querySelectorAll("[data-s]").forEach(b => b.onclick = () => { S.logStudio = b.dataset.s; render(); });
+    $app.querySelectorAll("[data-void]").forEach(b => b.onclick = async () => {
+      const s = S.sales.find(x => x.id === b.dataset.void); if (!s) return;
+      if (!s.voided && !confirm(`Void ${money(s.total)} from ${s.customerName}?`)) return;
+      const nowVoided = !s.voided;
+      try { await S.db.doc("sales/" + s.id).update({ voided: nowVoided }); await moveStockForSale(s, nowVoided ? -1 : 1); }
+      catch(e){ toast("Couldn't change that sale."); }
+    });
+    const $csv = document.getElementById("csv");
+    if ($csv) $csv.onclick = async () => {
+      const head = ["Date","Time","Studio","Customer","Phone","Email","Items","Qty","Total","Method","Note","Voided"];
+      const q = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+      const rows = list.map(s => { const dt = new Date(s.createdAt); return [
+        dayKey(dt), dt.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"}), studioName(s.studio), s.customerName, s.phone, s.email,
+        (s.lines||[]).map(l => `${l.name}${l.qty>1?" x"+l.qty:""}`).join("; "), s.itemCount, s.total, methodLabel(s.method), s.note, s.voided ? "yes" : ""
+      ].map(q).join(","); });
+      try { await S.downloads.save({ filename: `gs-sales-${dayKey(Date.now())}.csv`, data: [head.join(","), ...rows].join("\n") }); }
+      catch(e){ if (e && e.code !== "declined") toast("Download isn't available here."); }
+    };
+  }
+
+  /* ---------- stock ---------- */
+  function renderStock(){
+    if (S.stockMode === "count") return renderStocktake();
+    const tracked = S.items.filter(i => onHand(i) !== null);
+    const untracked = S.items.filter(i => onHand(i) === null);
+    const low = lowItems();
+    const value = tracked.reduce((a,i) => a + onHand(i) * (Number(i.price)||0), 0);
+    const units = tracked.reduce((a,i) => a + onHand(i), 0);
+    const lastCount = S.moves.find(m => m.type === "stocktake" && m.studio === S.studio);
+    $app.innerHTML = `
+      <h2>Stock at ${esc(studioName(S.studio))}</h2>
+      <p class="lede">Counts are per studio. Selling an item takes it off this list automatically.</p>
+      <div class="stats">
+        <div><b>${units}</b><span>units on hand</span></div>
+        <div><b>${money(value)}</b><span>at retail</span></div>
+        <div><b>${low.length}</b><span>running low</span></div>
+      </div>
+      ${low.length ? `<div class="banner">Running low: ${low.map(i => `${esc(i.name)} (${onHand(i)})`).join(", ")}</div>` : ""}
+      ${S.canWrite ? `<div class="actions" style="margin-top:0">
+        <button class="btn ghost" id="history">Recent changes</button>
+        <button class="btn" id="startCount">Do a stocktake</button>
+      </div>` : ""}
+      <p class="note">${lastCount ? `Last counted ${new Date(lastCount.at).toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"})}.` : "No stocktake recorded here yet."}</p>
+      <h2>On hand</h2>
+      ${tracked.length ? tracked.map(i => `
+        <div class="stock-row ${isLow(i)?"low":""}" data-id="${esc(i.id)}">
+          <span class="nm">${esc(i.name)}<small>${i.sku?esc(i.sku)+" · ":""}${money(i.price)}${otherStudioLine(i)}</small></span>
+          <span class="on">${onHand(i)}</span>
+          ${S.canWrite ? `<button class="qtybtn" data-add="${esc(i.id)}" aria-label="Add stock">+</button>
+          <button class="qtybtn" data-sub="${esc(i.id)}" aria-label="Remove one">−</button>` : ""}
+        </div>`).join("") : `<div class="empty">Nothing counted here yet. Run a stocktake to set your opening numbers.</div>`}
+      ${untracked.length ? `<h2>Not counted here</h2>
+        <p class="note" style="margin-bottom:10px">These sell fine, they just aren't stock-tracked at this studio. A stocktake brings them in.</p>
+        ${untracked.map(i => `<div class="stock-row"><span class="nm">${esc(i.name)}<small>${money(i.price)}${otherStudioLine(i)}</small></span><span class="on">—</span></div>`).join("")}` : ""}
+      ${S.downloads && tracked.length ? `<div class="actions"><button class="btn ghost wide" id="csv">Download stock as CSV</button></div>` : ""}`;
+
+    const $sc = document.getElementById("startCount");
+    if ($sc) $sc.onclick = () => { S.counts = {}; S.stockMode = "count"; render(); };
+    const $h = document.getElementById("history");
+    if ($h) $h.onclick = () => { S.stockMode = S.stockMode === "history" ? null : "history"; render(); };
+    $app.querySelectorAll("[data-add]").forEach(b => b.onclick = () => receive(b.dataset.add));
+    $app.querySelectorAll("[data-sub]").forEach(b => b.onclick = () => adjustOne(b.dataset.sub, -1));
+    if (S.stockMode === "history") {
+      const h = document.createElement("div");
+      h.innerHTML = `<h2>Recent changes</h2>${S.moves.length ? S.moves.slice(0,40).map(m => `
+        <div class="mv"><div>${esc(movementText(m))}</div><div class="t">${new Date(m.at).toLocaleString("en-AU",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})} · ${esc(studioName(m.studio))}</div></div>`).join("") : `<div class="empty">Nothing yet.</div>`}`;
+      $app.appendChild(h);
+    }
+    const $csv = document.getElementById("csv");
+    if ($csv) $csv.onclick = async () => {
+      const q = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+      const rows = tracked.map(i => [i.name, i.price, onHand(i), (onHand(i) * (Number(i.price)||0)).toFixed(2), i.lowAt ?? 0].map(q).join(","));
+      try { await S.downloads.save({ filename: `gs-stock-${S.studio}-${dayKey(Date.now())}.csv`, data: ["Item,Price,On hand,Retail value,Alert at", ...rows].join("\n") }); }
+      catch(e){ if (e && e.code !== "declined") toast("Download isn't available here."); }
+    };
+  }
+
+  function otherStudioLine(i){
+    const other = STUDIOS.find(s => s.id !== S.studio);
+    const n = other ? onHand(i, other.id) : null;
+    return n === null ? "" : ` · ${esc(other.name)}: ${n}`;
+  }
+
+  function movementText(m){
+    if (m.type === "stocktake") return `Stocktake — ${m.changed} item${m.changed===1?"":"s"} adjusted${m.netUnits ? `, ${m.netUnits > 0 ? "+" : ""}${m.netUnits} units` : ", no change"}`;
+    if (m.type === "received") return `Received ${m.qty} × ${m.name}${m.note ? " — " + m.note : ""}`;
+    if (m.type === "adjust") return `${m.qty > 0 ? "+" : ""}${m.qty} ${m.name}${m.note ? " — " + m.note : ""}`;
+    return m.type;
+  }
+
+  async function receive(id){
+    const it = S.items.find(i => i.id === id); if (!it) return;
+    const raw = prompt(`How many ${it.name} came in?`, "1");
+    if (raw === null) return;
+    const n = parseFloat(String(raw).replace(/[^0-9.\-]/g,""));
+    if (!n) return;
+    const cur = onHand(it) ?? 0;
+    try {
+      await setStock(id, S.studio, Math.round((cur + n) * 100) / 100);
+      await logMovement({ type: "received", itemId: id, name: it.name, qty: n, before: cur, after: cur + n });
+      toast(`${it.name}: ${cur + n} on hand.`);
+    } catch(e){ console.warn("receive failed", e); toast("Couldn't update that."); }
+  }
+
+  async function adjustOne(id, delta){
+    const it = S.items.find(i => i.id === id); if (!it) return;
+    const cur = onHand(it); if (cur === null) return;
+    const next = Math.round((cur + delta) * 100) / 100;
+    try {
+      await setStock(id, S.studio, next);
+      await logMovement({ type: "adjust", itemId: id, name: it.name, qty: delta, before: cur, after: next, note: "manual" });
+    } catch(e){ toast("Couldn't update that."); }
+  }
+
+  function renderStocktake(){
+    $app.innerHTML = `
+      <h2>Stocktake — ${esc(studioName(S.studio))}</h2>
+      <p class="lede">Walk the shelves and type what's actually there. Leave a box empty to leave that item alone. Nothing saves until you press Save count.</p>
+      ${S.items.length ? S.items.map(i => {
+        const h = onHand(i);
+        return `<div class="stock-row" data-id="${esc(i.id)}">
+          <span class="nm">${esc(i.name)}<small>system says ${h === null ? "not tracked" : h}</small></span>
+          <input class="cnt" inputmode="decimal" data-count="${esc(i.id)}" value="${S.counts[i.id] ?? ""}" placeholder="${h === null ? "—" : h}" aria-label="Counted ${esc(i.name)}">
+        </div>`; }).join("") : `<div class="empty">Add items first under Items.</div>`}
+      <div class="actions">
+        <button class="btn ghost" id="cancel">Cancel</button>
+        <button class="btn" id="save">Save count</button>
+      </div>`;
+    $app.querySelectorAll("[data-count]").forEach(inp => inp.oninput = () => { S.counts[inp.dataset.count] = inp.value; });
+    document.getElementById("cancel").onclick = () => { S.stockMode = null; S.counts = {}; render(); };
+    document.getElementById("save").onclick = async () => {
+      const changes = [];
+      for (const i of S.items) {
+        const raw = S.counts[i.id];
+        if (raw === undefined || String(raw).trim() === "") continue;
+        const n = parseFloat(String(raw).replace(/[^0-9.]/g,""));
+        if (!(n >= 0)) continue;
+        const was = onHand(i);
+        if (was === n) continue;
+        changes.push({ itemId: i.id, name: i.name, was, now: n });
+      }
+      if (!changes.length) { toast("Nothing to change."); S.stockMode = null; render(); return; }
+      if (!confirm(`Set ${changes.length} item${changes.length===1?"":"s"} to the counted numbers?`)) return;
+      let failed = 0;
+      for (const c of changes) { try { await setStock(c.itemId, S.studio, c.now); } catch(e){ failed++; } }
+      const net = changes.reduce((a,c) => a + (c.now - (c.was ?? 0)), 0);
+      await logMovement({ type: "stocktake", changed: changes.length - failed, netUnits: Math.round(net*100)/100,
+        detail: changes.slice(0,60).map(c => ({ name: c.name, was: c.was, now: c.now })) });
+      S.stockMode = null; S.counts = {};
+      toast(failed ? `Saved, ${failed} couldn't be updated.` : `Stocktake saved — ${changes.length} updated.`);
+      render();
+    };
+  }
+
+  /* ---------- items settings ---------- */
+  function renderSettings(){
+    $app.innerHTML = `
+      <h2>Items</h2>
+      <p class="lede">What stewards can tap on. Each item gets the next free number — write that on the tag with the price. The last column is the level that triggers a low-stock warning.</p>
+      <div id="cat">${S.items.map(i => `
+        <div class="cat-row" data-id="${esc(i.id)}">
+          <input data-k="name" value="${esc(i.name)}" aria-label="Item name" ${S.canWrite?"":"disabled"}>
+          <input data-k="sku" value="${esc(i.sku||"")}" placeholder="No." aria-label="Tag number" ${S.canWrite?"":"disabled"}>
+          <input data-k="price" inputmode="decimal" value="${esc(i.price)}" aria-label="Price" ${S.canWrite?"":"disabled"}>
+          <input data-k="lowAt" inputmode="numeric" value="${esc(i.lowAt ?? 0)}" aria-label="Alert when down to" title="Alert when stock drops to this" ${S.canWrite?"":"disabled"}>
+          ${S.canWrite?`<button class="x" data-del="${esc(i.id)}" aria-label="Remove">×</button>`:"<span></span>"}
+        </div>`).join("") || `<div class="empty">No items yet.</div>`}</div>
+      ${S.canWrite ? `
+      <div class="custom-grid" style="margin-top:14px">
+        <label class="field" style="margin:0"><span>New item</span><input class="small" id="nName" placeholder="e.g. Wombat, small"></label>
+        <label class="field" style="margin:0"><span>Price $</span><input class="small" id="nPrice" inputmode="decimal" placeholder="0"></label>
+        <button class="btn" id="nAdd" style="min-height:46px">Add</button>
+      </div>` : ""}`;
+    $app.querySelectorAll(".cat-row input").forEach(inp => inp.onchange = async () => {
+      const id = inp.closest(".cat-row").dataset.id, k = inp.dataset.k;
+      let v = inp.value.trim();
+      if (k === "sku") {
+        v = cleanSku(v);
+        if (v && S.items.some(x => x.id !== id && parseInt(x.sku,10) === parseInt(v,10))) { toast("That number is already used."); return; }
+        if (v) v = String(parseInt(v,10)).padStart(3,"0");
+      }
+      else if (k === "price" || k === "lowAt") { v = parseFloat(String(v).replace(/[^0-9.]/g,"")); if (!(v >= 0)) { toast("That needs to be a number."); return; } }
+      else if (!v) { toast("Item needs a name."); return; }
+      try { await S.db.doc("items/" + id).update({ [k]: v }); toast("Saved."); } catch(e){ toast("Couldn't save that."); }
+    });
+    $app.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+      try { await S.db.doc("items/" + b.dataset.del).update({ archived: true }); } catch(e){ toast("Couldn't remove that."); }
+    });
+    const $add = document.getElementById("nAdd");
+    if ($add) $add.onclick = async () => {
+      const name = document.getElementById("nName").value.trim();
+      const price = parseFloat(document.getElementById("nPrice").value.replace(/[^0-9.]/g,""));
+      if (!name || !(price >= 0)) { toast("Give it a name and a price."); return; }
+      const num = nextNumber();
+      try {
+        await S.db.collection("items").add({ name, price, sku: num, lowAt: 0, archived: false, createdAt: Date.now() });
+        document.getElementById("nName").value = ""; document.getElementById("nPrice").value = "";
+        toast(`${name} is ${num} — write ${num} and ${money(price)} on the tag.`);
+      } catch(e){ toast("Couldn't add that."); }
+    };
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
