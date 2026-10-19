@@ -7,8 +7,8 @@ const T={stewards:[{email:'hello@lundbech.me',name:'Tyson',role:'admin'}],items:
     {id:'c1',name:'Kim & Daryl Example',email:'kim@example.com',phone:'0400 000 001',note:null,from_notion:true,shop_known:false,since:'2025-11-05'},
     {id:'c2',name:'Lori',email:null,phone:'0400 000 002',note:null,from_notion:true,shop_known:true,since:'2026-03-27'}],
   daily_history:[
-    {day:'2026-10-15',studio:null,total:80,day_type:'Steady',source:'notion-steward-logs'},
-    {day:'2026-10-16',studio:null,total:13,day_type:'Quiet',source:'notion-steward-logs'}]};
+    {day:'2026-10-15',studio:'mont-albert',total:80,day_type:'Steady',source:'notion-steward-logs'},
+    {day:'2026-10-16',studio:'mont-albert',total:13,day_type:'Quiet',source:'notion-steward-logs'}]};
 const listeners=[];
 function from(table){
   const q={_f:[],_op:null,_payload:null,
@@ -157,7 +157,7 @@ const S_email=doc=>{const i=doc.getElementById('email');return i?(i.value||'(bla
   console.log('15 live sale offers a resend:', !!d.querySelector('[data-receipt]'));
   // the Notion history shows beside the sales book, and new faces join the list
   const banner=[...d.querySelectorAll('.banner')].find(b=>/Before the counter/.test(b.textContent));
-  assert.ok(banner); assert.match(banner.textContent,/\$93 over 2 logged days/);
+  assert.ok(banner); assert.match(banner.textContent,/\$93 over 2 logged days/); assert.match(banner.textContent,/Assigned to Mont Albert/);
   assert.ok(T.customers.some(c=>c.name==='Daryl' && c.email==='daryl@example.com'));
   console.log('16 history note:', banner?banner.textContent.replace(/\s+/g,' ').trim().slice(0,150):'MISSING');
   console.log('17 customer list now:', (T.customers||[]).map(c=>[c.name,c.email||'-',c.from_notion?'notion':'new',c.shop_known?'shop':'-'].join('/')));
@@ -169,4 +169,10 @@ const S_email=doc=>{const i=doc.getElementById('email');return i?(i.value||'(bla
   choice.click(); await wait(40); d.getElementById('back').click(); await wait(40);
   assert.equal(d.getElementById('email').value,'daryl@example.com');
   console.log('18 newest sale contact wins over older sales');
+  d.querySelector('[data-view="log"]').click(); await wait(40);
+  d.querySelector('[data-s="hawthorn"]').click(); await wait(40);
+  assert.ok(![...d.querySelectorAll('.banner')].some(b=>/Before the counter/.test(b.textContent)));
+  d.querySelector('[data-s="mont-albert"]').click(); await wait(40);
+  assert.ok([...d.querySelectorAll('.banner')].some(b=>/Assigned to Mont Albert/.test(b.textContent)));
+  console.log('19 history follows the assigned studio filter');
 }catch(e){process.exitCode=1;console.error('TEST ERR',e.message,e.stack.split('\n')[1]);} })();

@@ -64,8 +64,8 @@ The launch policy migration is `migrations/20261019_launch_access.sql`. The orig
 
 ## October 20 Notion integration
 
-The customer list supplies name suggestions and contact prefill. Suggestions with an email skip the contact step; phone-only records ask for email. Sales add new customers and fill missing details. Daily takings remain in `daily_history`, separate from real sale rows. Historical studio values remain unknown. Historical averages may include atypical entries; review the source logs before interpreting them. The counter comparison covers days with recorded sales, not all studio opening days.
+The customer list supplies name suggestions and contact prefill. Suggestions with an email skip the contact step; phone-only records ask for email. Sales add new customers and fill missing details. Daily takings remain in `daily_history`, separate from real sale rows. The imported history and all existing sales were assigned to Mont Albert at Tyson’s request on October 20. Historical averages may include atypical entries; review the source logs before interpreting them. The counter comparison covers days with recorded sales, not all studio opening days.
 
 Only the schema migration is tracked under `migrations/20261020_customer_history_schema.sql`. The Notion export, data-bearing SQL and import generator are private local files under the ignored `private-import/` directory. Do not commit them or paste real contacts into tests.
 
-Customer lookup is approved for public access until 00:00 Wednesday 21 October 2026 (Melbourne), matching the launch window. Outside that window only allowlisted stewards can read or update customer records. The history table is read-only to the app and retains null studios.
+Customer lookup is approved for public access until 00:00 Wednesday 21 October 2026 (Melbourne), matching the launch window. Outside that window only allowlisted stewards can read or update customer records. The history table is read-only to the app. Its studio was assigned to Mont Albert at Tyson’s request; this assignment is separate from the original Notion data.

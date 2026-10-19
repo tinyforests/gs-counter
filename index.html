@@ -743,7 +743,8 @@ window.addEventListener("error", e => {
   // sits beside the sales book rather than inside it.
   function historyNote(live){
     if (!S.history.length) return "";
-    const days = S.history.filter(h => typeof h.total === "number");
+    const days = S.history.filter(h => typeof h.total === "number" &&
+      (S.logStudio === "all" || !h.studio || h.studio === S.logStudio));
     if (!days.length) return "";
     const total = days.reduce((a,h) => a + h.total, 0);
     const open = days.length;
@@ -754,7 +755,7 @@ window.addEventListener("error", e => {
     const from = fmt(sorted[0]), to = fmt(sorted[sorted.length - 1]);
     const span = from === to ? from : `${from} – ${to}`;
 
-    // compare like with like: average per open day, then against now
+    // History covers logged days; the counter rate covers recorded sale days.
     let compare = "";
     if (live.length) {
       const liveDays = new Set(live.map(s => dayKey(s.createdAt))).size;
@@ -764,10 +765,12 @@ window.addEventListener("error", e => {
         compare = ` On recorded counter sale days: ${money(nowPerDay)} a day, ${pct === 0 ? "about the same" : (pct > 0 ? `${pct}% above` : `${Math.abs(pct)}% below`)} that.`;
       }
     }
+    const studios = [...new Set(days.map(h => h.studio).filter(Boolean))].map(studioName).join(", ");
+    const studioNote = days.some(h => !h.studio) ? "Some studio assignments are unknown." : `Assigned to ${studios}.`;
     return `<div class="banner" style="border-left-color:var(--brass);background:var(--panel)">
       <b>Before the counter</b> — ${money(total)} over ${open} logged days (${traded} with a sale), ${esc(span)}, from the Notion steward logs.
       That averages ${money(perDay)} a day.${compare}
-      <br><span class="t" style="font-family:var(--mono);font-size:12px">Daily totals only — Notion never recorded items or payment methods, and which studio took the money wasn't logged.</span>
+      <br><span class="t" style="font-family:var(--mono);font-size:12px">Daily totals only — Notion never recorded items or payment methods. ${esc(studioNote)}</span>
     </div>`;
   }
 
