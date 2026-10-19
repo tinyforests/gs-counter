@@ -1,5 +1,7 @@
 # G&S Counter
 
+**Launch window:** public read/write access without sign-in until 00:00 Wednesday 21 October 2026, Melbourne time. It expires automatically at both the database and page.
+
 Studio sales and stock for Gardener & Son.
 
 - Live dogfood site: https://tinyforests.github.io/gs-counter/
@@ -26,7 +28,7 @@ git commit -m "Describe your change"
 git push
 ```
 
-No framework or build step is needed. `config.js` contains a public publishable key, not a service-role credential. Database row-level security restricts access to allowlisted stewards. GitHub Pages itself is publicly reachable; business records require sign-in.
+No framework or build step is needed. `config.js` contains a public publishable key, not a service-role credential. Outside the temporary launch window, database row-level security restricts access to allowlisted stewards. GitHub Pages itself is publicly reachable.
 
 ## Sign-in emails
 
@@ -42,7 +44,7 @@ npm ci --ignore-scripts
 npm test
 ```
 
-The jsdom exercises print observed behavior and assert the key receipt and sign-in outcomes; failures exit nonzero. The mailer was separately checked against PostgreSQL/PGlite and a simulated Apps Script runtime during setup.
+The jsdom exercises print observed behavior and assert key receipt and sign-in outcomes; failures exit nonzero. The mailer was separately checked against PostgreSQL/PGlite and a simulated Apps Script runtime during setup.
 
 ## Dogfood limits
 
@@ -56,4 +58,6 @@ Read [ARCHITECTURE.md](ARCHITECTURE.md) before changing the data mapping or stoc
 
 ## October 19 update
 
-Customer names are required. The contact step asks for email first; phone and email remain optional. After a sale, staff can open a receipt in their mail app, copy its text, or add an email and save it onto the sale. Active sales can have a receipt opened again from the sales book. These actions prepare an email for manual sending; they do not send automatically. The existing steward sign-in and database access policies remain active.
+Customer names are required. The contact step asks for email first; phone and email remain optional. After a sale, staff can open a receipt in their mail app, copy its text, or add an email and save it onto the sale. Active sales can have a receipt opened again from the sales book. These actions prepare an email for manual sending; they do not send automatically. For the October 20 launch, sign-in is temporarily bypassed and public database access is enabled until 00:00 Wednesday 21 October 2026 (Melbourne). Both the page and database enforce this expiry automatically. Anyone can read and change sales, stock and customer contacts during this approved launch window. Receipt buttons open a draft in the device mail app; staff still press Send.
+
+The launch policy migration is `migrations/20261019_launch_access.sql`. The original steward policies remain active underneath it. No scheduled agent or automation is required for expiry. Reload an already-open device after deployment.

@@ -86,7 +86,7 @@ Stock writes are **fire-and-forget after the sale**: `finish()` saves the sale, 
 
 ## Auth
 
-**Deployed configuration:** `REQUIRE_SIGN_IN: true`. The live database restricts business data to allowlisted stewards. No open-access policies are applied. The Apps Script worker described in `mailer/README.md` sends sign-in links.
+**Launch configuration:** `REQUIRE_SIGN_IN: false` with `PUBLIC_ACCESS_UNTIL: "2026-10-20T13:00:00Z"`. The approved public read/write window ends at midnight after October 20 in Melbourne. The launch migration gives `anon` and `authenticated` access until that timestamp, while retaining the existing steward policies. The page reloads at expiry and falls back to steward sign-in. The Apps Script worker described in `mailer/README.md` sends sign-in links.
 
 Magic link (Supabase OTP), then an allow-list check against the `stewards` table. Two layers, and both matter:
 

@@ -196,7 +196,10 @@
     window.__gsReady();
   }
 
-  if (CFG.REQUIRE_SIGN_IN === false) {
+  const openUntil = CFG.PUBLIC_ACCESS_UNTIL ? Date.parse(CFG.PUBLIC_ACCESS_UNTIL) : Infinity;
+  const openMode = CFG.REQUIRE_SIGN_IN === false && Date.now() < openUntil;
+  if (openMode) {
+    if (Number.isFinite(openUntil)) setTimeout(() => location.reload(), Math.max(0, openUntil - Date.now()));
     // Open mode: no sign-in. The counter is whoever has the link.
     steward = { id: null, email: "", name: "", role: "admin" };
     window.GS_STEWARD = steward;
@@ -225,5 +228,5 @@
   };
 
   window.GS_SIGN_OUT = () => sb.auth.signOut();
-  window.GS_OPEN_MODE = CFG.REQUIRE_SIGN_IN === false;
+  window.GS_OPEN_MODE = openMode;
 })();
