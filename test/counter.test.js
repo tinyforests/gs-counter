@@ -1,3 +1,4 @@
+const assert = require('node:assert/strict');
 const {JSDOM}=require('jsdom');const fs=require('fs');const path=require('path').join(__dirname,'..')+'/';
 // --- fake supabase-js: tables as arrays of rows, chainable query builder ---
 const T={stewards:[{email:'hello@lundbech.me',name:'Tyson',role:'admin'}],items:[],sales:[],movements:[]};
@@ -45,20 +46,24 @@ const html=fs.readFileSync(path+'index.html','utf8')
   .replace('<script src="config.js"></script>','')
   .replace('<script src="backend.js"></script>','<script>'+fs.readFileSync(path+'backend.js','utf8')+'</script>');
 const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,url:'https://counter.gardenerandson.com/',beforeParse(w){
-  w.GS_CONFIG={SUPABASE_URL:'x',SUPABASE_ANON_KEY:'y',STUDIOS:[{id:'mont-albert',name:'Mont Albert',addr:'2 Churchill Street'},{id:'hawthorn',name:'Hawthorn',addr:'140 Auburn Road'}]};
+  w.GS_CONFIG={SUPABASE_URL:'x',SUPABASE_ANON_KEY:'y',REQUIRE_SIGN_IN:true,STUDIOS:[{id:'mont-albert',name:'Mont Albert',addr:'2 Churchill Street'},{id:'hawthorn',name:'Hawthorn',addr:'140 Auburn Road'}]};
   w.supabase={createClient:()=>sbClient};
   w.crypto={randomUUID:()=>'id-'+Math.random().toString(36).slice(2,10)};
-  w.onerror=(m,s,l,c,e)=>console.log('ONERROR',m,e&&e.stack&&e.stack.split('\n')[1]);
-  w.confirm=()=>true; w.prompt=()=>'5'; w.URL.createObjectURL=()=>'blob:x'; w.URL.revokeObjectURL=()=>{};
+  w.onerror=(m,s,l,c,e)=>{process.exitCode=1;console.error('ONERROR',m);};
+  w.confirm=()=>true;
+  w.prompt=()=>'5'; w.URL.createObjectURL=()=>'blob:x'; w.URL.revokeObjectURL=()=>{};
 }});
 const d=dom.window.document,W=dom.window,wait=ms=>new Promise(r=>setTimeout(r,ms));
+// catch the receipt instead of letting jsdom try to open Mail
+d.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[href^="mailto:"]');if(a){W.__mailto=a.getAttribute('href');e.preventDefault();}},true);
 const q=s=>d.querySelector(s);
 (async()=>{ try{
   await wait(300);
   console.log('gate gone:', !d.getElementById('gsGate'));
   console.log('1', q('h1').textContent);
   d.querySelector('[data-studio="mont-albert"]').click(); await wait(80);
-  console.log('2', q('h1').textContent);
+  assert.equal(d.getElementById('walkin'),null); assert.equal(d.getElementById('next').disabled,true);
+  console.log('2', q('h1').textContent, '| walk-in button gone:', !d.getElementById('walkin'), '| next disabled with no name:', d.getElementById('next').disabled);
   d.querySelector('[data-view="settings"]').click(); await wait(40);
   d.getElementById('nName').value='Wombat, small'; d.getElementById('nPrice').value='85';
   d.getElementById('nAdd').click(); await wait(120);
@@ -67,6 +72,7 @@ const q=s=>d.querySelector(s);
   d.querySelector('[data-view="sale"]').click(); await wait(40);
   const n=d.getElementById('name'); n.value='Kim'; n.dispatchEvent(new W.Event('input'));
   d.getElementById('next').click(); await wait(30);
+  d.getElementById('email').value='kim@example.com'; d.getElementById('email').dispatchEvent(new W.Event('input'));
   d.getElementById('phone').value='0412 345 678'; d.getElementById('phone').dispatchEvent(new W.Event('input'));
   d.getElementById('next').click(); await wait(40);
   const sc=d.getElementById('scan'); sc.value='001'; sc.dispatchEvent(new W.KeyboardEvent('keydown',{key:'Enter'})); await wait(60);
@@ -75,7 +81,14 @@ const q=s=>d.querySelector(s);
   d.querySelector('[data-m="square"]').click(); await wait(30);
   d.getElementById('note').value='asked about a front garden'; d.getElementById('note').dispatchEvent(new W.Event('input'));
   d.getElementById('finish').click(); await wait(250);
-  console.log('5', q('h1').textContent, '| sale row:', JSON.stringify(T.sales[0]));
+  assert.ok(d.getElementById('receipt')); assert.equal(T.sales[0].steward_id,'u-1');
+  console.log('5 receipt button:', !!d.getElementById('receipt'));
+  if(d.getElementById('receipt')){ d.getElementById('receipt').click(); await wait(30);
+    const m=decodeURIComponent((W.__mailto||'').split('&body=')[1]||'');
+    assert.match(W.__mailto,/^mailto:kim%40example.com\?/); assert.match(m,/Wombat, small/); assert.match(m,/TOTAL\s+\$85/);
+    console.log('5a mailto to:', (W.__mailto||'').slice(0,40));
+    console.log('5b receipt:\n'+m.split('\n').map(l=>'    '+l).join('\n')); }
+  console.log('5c', q('h1').textContent, '| sale row:', JSON.stringify(T.sales[0]));
   // stock: stocktake then receive
   d.querySelector('[data-view="stock"]').click(); await wait(60);
   d.getElementById('startCount').click(); await wait(40);
@@ -99,4 +112,25 @@ const q=s=>d.querySelector(s);
   d.querySelector('[data-void]').click(); await wait(250);
   console.log('10 after void:', T.sales[0].voided, JSON.stringify(T.items[0].stock));
   console.log('11 csv button present:', !!d.getElementById('csv'));
-}catch(e){console.log('TEST ERR',e.message,e.stack.split('\n')[1]);} })();
+  assert.equal(d.querySelector('[data-receipt]'),null);
+  console.log('12 voided sale offers no receipt:', !d.querySelector('[data-receipt]'));
+  // a sale with no email at all: the done screen should offer to add one
+  d.querySelector('[data-view="sale"]').click(); await wait(40);
+  const n2=d.getElementById('name'); n2.value='Daryl'; n2.dispatchEvent(new W.Event('input'));
+  d.getElementById('next').click(); await wait(30);
+  d.getElementById('skip').click(); await wait(40);
+  const sc2=d.getElementById('scan'); sc2.value='001'; sc2.dispatchEvent(new W.KeyboardEvent('keydown',{key:'Enter'})); await wait(60);
+  d.getElementById('next').click(); await wait(40);
+  d.querySelector('[data-m="cash"]').click(); await wait(30);
+  d.getElementById('finish').click(); await wait(250);
+  assert.ok(d.getElementById('lateEmail'));
+  console.log('13 no-email sale offers an email box:', !!d.getElementById('lateEmail'));
+  d.getElementById('lateEmail').value='daryl@example.com';
+  d.getElementById('saveEmail').click(); await wait(250);
+  const daryl=T.sales.find(x=>x.customer_name==='Daryl');
+  assert.equal(daryl.email,'daryl@example.com'); assert.ok(W.__mailto.includes('daryl'));
+  console.log('14 email written back onto the sale:', daryl && daryl.email, '| receipt opened:', (W.__mailto||'').includes('daryl'));
+  d.querySelector('[data-view="log"]').click(); await wait(60);
+  assert.ok(d.querySelector('[data-receipt]'));
+  console.log('15 live sale offers a resend:', !!d.querySelector('[data-receipt]'));
+}catch(e){process.exitCode=1;console.error('TEST ERR',e.message,e.stack.split('\n')[1]);} })();

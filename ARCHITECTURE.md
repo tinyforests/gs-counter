@@ -86,6 +86,8 @@ Stock writes are **fire-and-forget after the sale**: `finish()` saves the sale, 
 
 ## Auth
 
+**Deployed configuration:** `REQUIRE_SIGN_IN: true`. The live database restricts business data to allowlisted stewards. No open-access policies are applied. The Apps Script worker described in `mailer/README.md` sends sign-in links.
+
 Magic link (Supabase OTP), then an allow-list check against the `stewards` table. Two layers, and both matter:
 
 1. **The gate in `backend.js`** — cosmetic. It stops the UI rendering.
@@ -116,7 +118,8 @@ The stub matters. The one real bug found during the port (stock updates sent wit
 - **Square is not connected.** Recording a sale as Square records the fact; the reader takes the payment separately. Reconcile monthly against Square's own report. Connecting it properly needs a server-side OAuth flow, which this architecture has nowhere to put.
 - **Last writer wins.** No transactions, no optimistic locking. Two stewards editing one item in the same second: later write stands.
 - **Sales book caps at 500 rows, movements at 100.** Raise in `QUERY`.
-- **Customer contacts are readable by every steward.** Name, phone, email sit in `sales`. If that ever needs narrowing, it's an RLS policy on `sales`, not a UI change.
+- **Customer contacts are readable by allowlisted stewards.** Name, phone, email sit in `sales`. Narrowing that is an RLS policy on `sales`, not a UI change.
+- **Receipts are `mailto:`, not sent mail.** `openReceipt()` builds a plain-text receipt and clicks a hidden anchor, so the iPad's Mail app opens with it written out and the steward presses send. It goes from whichever account that device uses, and nothing is recorded about whether it was actually sent. Automated sending from `hello@gardenerandson.com` needs a Supabase Edge Function plus an email provider (Resend, Postmark) with SPF and DKIM on the domain — a server-side API key, so it cannot live in this static page. Worth doing once the counter is bedded in; not worth blocking a first day on.
 - **Studio ids are permanent.** They're stored on every sale and as stock keys. Renaming `mont-albert` orphans history. Change the display `name` freely; never the `id`.
 - **Deleting a steward** from the allow list revokes access on their next request, but their existing session's JWT stays valid until it expires (an hour by default).
 
@@ -127,5 +130,7 @@ The stub matters. The one real bug found during the port (stock updates sent wit
 **Add a payment method** — add to `METHODS` in `index.html`. The id is stored raw on the sale, so pick it once and keep it.
 
 **Change the brand** — the palette and type live in `:root` custom properties at the top of `index.html`, mirroring the G&S design standard. Dark mode is defined twice, under `prefers-color-scheme` and under `[data-theme="dark"]`; change both.
+
+**Change the receipt wording** — `receiptText()` in `index.html`. It's plain text at a fixed 42-column width; `row(left, right)` handles the alignment.
 
 **Push Notion the daily totals** — `sales` is queryable by `day`; sum `total` where `voided = false`. No code here does it yet.

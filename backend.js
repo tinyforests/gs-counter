@@ -196,11 +196,18 @@
     window.__gsReady();
   }
 
-  sb.auth.getSession().then(({ data }) => check(data.session));
-  sb.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_IN") setTimeout(() => check(session), 0);
-    if (event === "SIGNED_OUT") { steward = null; location.reload(); }
-  });
+  if (CFG.REQUIRE_SIGN_IN === false) {
+    // Open mode: no sign-in. The counter is whoever has the link.
+    steward = { id: null, email: "", name: "", role: "admin" };
+    window.GS_STEWARD = steward;
+    window.__gsReady();
+  } else {
+    sb.auth.getSession().then(({ data }) => check(data.session));
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") setTimeout(() => check(session), 0);
+      if (event === "SIGNED_OUT") { steward = null; location.reload(); }
+    });
+  }
 
   const user = {
     id: async () => (steward ? steward.id : null),
@@ -218,4 +225,5 @@
   };
 
   window.GS_SIGN_OUT = () => sb.auth.signOut();
+  window.GS_OPEN_MODE = CFG.REQUIRE_SIGN_IN === false;
 })();

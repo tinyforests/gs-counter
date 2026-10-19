@@ -42,7 +42,7 @@ npm ci --ignore-scripts
 npm test
 ```
 
-The supplied jsdom exercises print observed behavior; they do not contain assertions. The mailer was separately checked against PostgreSQL/PGlite and a simulated Apps Script runtime during setup.
+The jsdom exercises print observed behavior and assert the key receipt and sign-in outcomes; failures exit nonzero. The mailer was separately checked against PostgreSQL/PGlite and a simulated Apps Script runtime during setup.
 
 ## Dogfood limits
 
@@ -53,3 +53,7 @@ The supplied jsdom exercises print observed behavior; they do not contain assert
 - Signing in has been verified through a sent-email copy; arrival in the requested inbox still needs tracing.
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md) before changing the data mapping or stock behavior. The custom domain `counter.gardenerandson.com` is not configured.
+
+## October 19 update
+
+Customer names are required. The contact step asks for email first; phone and email remain optional. After a sale, staff can open a receipt in their mail app, copy its text, or add an email and save it onto the sale. Active sales can have a receipt opened again from the sales book. These actions prepare an email for manual sending; they do not send automatically. The existing steward sign-in and database access policies remain active.

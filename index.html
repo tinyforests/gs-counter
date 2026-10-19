@@ -313,9 +313,10 @@ window.addEventListener("error", e => {
     if (S.studio) {
       const today = S.sales.filter(s => !s.voided && s.studio === S.studio && dayKey(s.createdAt) === dayKey(Date.now()));
       const low = lowItems().length;
-      $studioLine.innerHTML = `<span>${esc(studioName(S.studio))} · today ${money(today.reduce((a,s)=>a+s.total,0))} from ${today.length} sale${today.length===1?"":"s"}${low ? ` · ${low} item${low===1?"":"s"} low` : ""}</span><span><button id="changeStudio">Change studio</button> · <button id="signOut">Sign out</button></span>`;
+      $studioLine.innerHTML = `<span>${esc(studioName(S.studio))} · today ${money(today.reduce((a,s)=>a+s.total,0))} from ${today.length} sale${today.length===1?"":"s"}${low ? ` · ${low} item${low===1?"":"s"} low` : ""}</span><span><button id="changeStudio">Change studio</button>${window.GS_OPEN_MODE ? "" : ` · <button id="signOut">Sign out</button>`}</span>`;
       document.getElementById("changeStudio").onclick = () => { S.studio = null; render(); };
-      document.getElementById("signOut").onclick = () => { if (confirm("Sign out of the counter on this device?")) window.GS_SIGN_OUT(); };
+      const $so = document.getElementById("signOut");
+      if ($so) $so.onclick = () => { if (confirm("Sign out of the counter on this device?")) window.GS_SIGN_OUT(); };
     } else $studioLine.innerHTML = "";
   }
 
@@ -374,13 +375,12 @@ window.addEventListener("error", e => {
     $app.innerHTML = `
       ${stepBar(0)}
       <h1>Who's buying?</h1>
-      <p class="lede">Start typing. Anyone who's bought before will come up.</p>
+      <p class="lede">Ask for their name. Anyone who's bought before will come up as you type.</p>
       <label class="field"><span>Customer name</span>
         <input class="big" id="name" autocomplete="off" value="${esc(d.name)}" placeholder="First and last name"></label>
       <div class="suggest" id="suggest"></div>
       <div class="actions">
-        <button class="btn ghost" id="walkin">Walk-in, no name</button>
-        <button class="btn" id="next" ${d.name.trim()?"":"disabled"}>Next</button>
+        <button class="btn wide" id="next" ${d.name.trim()?"":"disabled"}>Next</button>
       </div>`;
     const $n = document.getElementById("name"), $next = document.getElementById("next"), $sg = document.getElementById("suggest");
     const drawSuggest = () => {
@@ -398,7 +398,6 @@ window.addEventListener("error", e => {
     $n.oninput = () => { S.draft.name = $n.value; $next.disabled = !$n.value.trim(); drawSuggest(); };
     $n.onkeydown = e => { if (e.key === "Enter" && $n.value.trim()) { S.step = 1; render(); } };
     $next.onclick = () => { S.step = 1; render(); };
-    document.getElementById("walkin").onclick = () => { Object.assign(S.draft, { name: "Walk-in", phone: "", email: "" }); S.step = 2; render(); };
     drawSuggest();
     setTimeout(() => $n.focus(), 30);
   }
@@ -408,9 +407,9 @@ window.addEventListener("error", e => {
     $app.innerHTML = `
       ${stepBar(1)}
       <h1>How do we reach ${esc(d.name.split(" ")[0])}?</h1>
-      <p class="lede">Either one is fine. Ask if they'd like to hear about workshops and new stock.</p>
+      <p class="lede">Email is what a receipt gets sent to, so ask for that one. Worth mentioning they'll hear about workshops and new stock too.</p>
+      <label class="field"><span>Email — for the receipt</span><input class="big" id="email" type="email" inputmode="email" autocapitalize="off" autocorrect="off" autocomplete="off" value="${esc(d.email)}" placeholder="name@example.com"></label>
       <label class="field"><span>Phone</span><input class="big" id="phone" type="tel" inputmode="tel" autocomplete="off" value="${esc(d.phone)}" placeholder="04xx xxx xxx"></label>
-      <label class="field"><span>Email</span><input class="big" id="email" type="email" inputmode="email" autocomplete="off" value="${esc(d.email)}" placeholder="name@example.com"></label>
       <div class="actions">
         <button class="btn ghost" id="back">Back</button>
         <button class="btn text" id="skip">Skip</button>
@@ -426,7 +425,7 @@ window.addEventListener("error", e => {
       if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { toast("That email doesn't look right."); $e.focus(); return; }
       S.step = 2; render();
     };
-    setTimeout(() => $p.focus(), 30);
+    setTimeout(() => $e.focus(), 30);
   }
 
   function addLine(it){
@@ -522,7 +521,7 @@ window.addEventListener("error", e => {
       d.lines.push({ itemId, name, price, qty: 1 });
       render();
     };
-    document.getElementById("back").onclick = () => { S.step = d.name === "Walk-in" ? 0 : 1; render(); };
+    document.getElementById("back").onclick = () => { S.step = 1; render(); };
     document.getElementById("next").onclick = () => { S.step = 3; render(); };
   }
 
@@ -578,19 +577,94 @@ window.addEventListener("error", e => {
       }
     }
     S.saving = false;
-    if (ok) { S.lastSale = doc; S.step = 4; moveStockForSale(doc, 1); }
+    if (ok) { S.lastSale = Object.assign({ id: ref.id }, doc); S.step = 4; moveStockForSale(doc, 1); }
     render();
+  }
+
+  /* ---------- receipt ---------- */
+  function receiptText(s){
+    const when = new Date(s.createdAt).toLocaleString("en-AU", { weekday:"long", day:"numeric", month:"long", year:"numeric", hour:"numeric", minute:"2-digit" });
+    const W = 42;
+    const row = (left, right) => left + " ".repeat(Math.max(1, W - left.length - right.length)) + right;
+    const lines = (s.lines || []).map(l =>
+      row(l.name + (l.qty > 1 ? "  x" + l.qty : ""), money(l.price * l.qty)));
+    const studio = STUDIOS.find(x => x.id === s.studio) || {};
+    return [
+      `Hello ${String(s.customerName || "").split(" ")[0]},`,
+      ``,
+      `Thank you — here's your receipt.`,
+      ``,
+      `GARDENER & SON`,
+      `${studio.name || ""}${studio.addr ? ", " + studio.addr : ""}`,
+      `${when}`,
+      ``,
+      "-".repeat(W),
+      ...lines,
+      "-".repeat(W),
+      row("TOTAL", money(s.total)),
+      ``,
+      `Paid by ${methodLabel(s.method)}`,
+      ``,
+      `Everything we sell is grown or made for the`,
+      `gardens of this place. If you'd like a hand`,
+      `planting it, just reply to this email.`,
+      ``,
+      `Gardener & Son`,
+      `gardenerandson.com`,
+    ].join("\n");
+  }
+
+  function openReceipt(s){
+    const subject = `Your receipt from Gardener & Son — ${money(s.total)}`;
+    const href = "mailto:" + encodeURIComponent(s.email) +
+      "?subject=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(receiptText(s));
+    // an anchor click rather than location.href: Mail opens and the counter
+    // stays exactly where it was, which matters mid-sale on an iPad
+    const a = document.createElement("a");
+    a.href = href; a.style.display = "none";
+    document.body.appendChild(a); a.click(); a.remove();
   }
 
   function stepDone(){
     const s = S.lastSale || {};
+    const advice = s.method === "square" || s.method === "card" ? "Make sure the reader shows it approved."
+      : s.method === "cash" ? "Pop it in the tin."
+      : s.method === "invoice" ? "Let Tyson know to send the invoice." : "";
     $app.innerHTML = `
       <div class="done">
         <div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
         <h1>Recorded.</h1>
-        <p class="lede">${money(s.total)} ${esc(methodLabel(s.method)).toLowerCase()} from ${esc(s.customerName)}. ${s.method === "square" || s.method === "card" ? "Make sure the reader shows it approved." : s.method === "cash" ? "Pop it in the tin." : s.method === "invoice" ? "Let Tyson know to send the invoice." : ""}</p>
-        <div class="actions"><button class="btn wide" id="again">Next customer</button></div>
+        <p class="lede">${money(s.total)} ${esc(methodLabel(s.method)).toLowerCase()} from ${esc(s.customerName)}. ${advice}</p>
+        ${s.email ? `
+          <div class="actions" style="margin-top:0">
+            <button class="btn" id="receipt">Email the receipt</button>
+            <button class="btn ghost" id="copyReceipt">Copy it</button>
+          </div>
+          <p class="note">Goes to ${esc(s.email)}. Opens Mail with it written out — check it and press send.</p>
+        ` : `
+          <label class="field" style="margin-top:10px"><span>Want a receipt? Add their email</span>
+            <input class="big" id="lateEmail" type="email" inputmode="email" autocapitalize="off" autocorrect="off" placeholder="name@example.com"></label>
+          <div class="actions" style="margin-top:0"><button class="btn" id="saveEmail">Save and write the receipt</button></div>
+        `}
+        <div class="actions"><button class="btn wide ${s.email ? "ghost" : ""}" id="again">Next customer</button></div>
       </div>`;
+    const $r = document.getElementById("receipt");
+    if ($r) $r.onclick = () => openReceipt(s);
+    const $c = document.getElementById("copyReceipt");
+    if ($c) $c.onclick = async () => {
+      try { await navigator.clipboard.writeText(receiptText(s)); toast("Receipt copied — paste it into an email."); }
+      catch(e){ toast("Couldn't copy it on this device."); }
+    };
+    const $se = document.getElementById("saveEmail");
+    if ($se) $se.onclick = async () => {
+      const em = document.getElementById("lateEmail").value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { toast("That email doesn't look right."); return; }
+      S.lastSale.email = em;
+      if (s.id) { try { await S.db.doc("sales/" + s.id).update({ email: em }); } catch(e){ toast("Saved for the receipt, but not onto the sale."); } }
+      render();
+      openReceipt(S.lastSale);
+    };
     document.getElementById("again").onclick = () => { S.draft = freshDraft(); S.scan = ""; S.step = 0; render(); };
   }
 
@@ -630,11 +704,18 @@ window.addEventListener("error", e => {
           <div class="t">${new Date(s.createdAt).toLocaleString("en-AU",{weekday:"short",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})}${s.phone?" · "+esc(s.phone):""}${s.email?" · "+esc(s.email):""}</div>
           <div class="its">${(s.lines||[]).map(l => `${esc(l.name)}${l.qty>1?" ×"+l.qty:""}`).join(", ")}</div>
           ${s.note ? `<div class="its" style="color:var(--ink)">“${esc(s.note)}”</div>` : ""}
-          ${S.canWrite ? `<button class="void" data-void="${esc(s.id)}">${s.voided?"Restore":"Void (mistake / refund)"}</button>` : ""}
+          <div class="row" style="gap:14px">
+            ${s.email && !s.voided ? `<button class="void" style="color:var(--ink-soft)" data-receipt="${esc(s.id)}">Email the receipt</button>` : ""}
+            ${S.canWrite ? `<button class="void" data-void="${esc(s.id)}">${s.voided?"Restore":"Void (mistake / refund)"}</button>` : ""}
+          </div>
         </div>`).join("") : `<div class="empty">No sales in this range yet.</div>`}</div>
       ${S.downloads && list.length ? `<div class="actions"><button class="btn ghost wide" id="csv">Download these as CSV</button></div>` : ""}`;
     $app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { S.logFilter = b.dataset.f; render(); });
     $app.querySelectorAll("[data-s]").forEach(b => b.onclick = () => { S.logStudio = b.dataset.s; render(); });
+    $app.querySelectorAll("[data-receipt]").forEach(b => b.onclick = () => {
+      const sale = S.sales.find(x => x.id === b.dataset.receipt);
+      if (sale) openReceipt(sale);
+    });
     $app.querySelectorAll("[data-void]").forEach(b => b.onclick = async () => {
       const s = S.sales.find(x => x.id === b.dataset.void); if (!s) return;
       if (!s.voided && !confirm(`Void ${money(s.total)} from ${s.customerName}?`)) return;
