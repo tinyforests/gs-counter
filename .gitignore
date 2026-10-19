@@ -5,3 +5,8 @@ node_modules/
 !.env.example
 dist/
 .openai/
+
+# Real customer imports stay local, never in public source.
+private-import/
+migrate-notion.sql
+migrate/notion-data.json

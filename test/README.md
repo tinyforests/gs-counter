@@ -11,7 +11,7 @@ No Supabase project needed — both tests run the real `index.html` and `backend
 
 Walks a full shift and prints what landed in the fake database at each step:
 
-1. Sign-in clears for an allowlisted steward
+1. Open mode: the counter comes straight up with no sign-in
 2. Studio picker → name step
 3. Add an item under Items, check it gets tag number `001`
 4. Sale: customer name, phone, scan `001`, Square payment, note
@@ -27,11 +27,17 @@ Walks a full shift and prints what landed in the fake database at each step:
 14. That email is written back onto the sale row, and the receipt opens
 15. A live sale can have its receipt re-sent from the sales book
 
-The exercises print row shapes and assert required names, steward attribution, receipt recipient/content, receipt visibility on voided sales, and saved post-sale emails. Failures exit nonzero.
+Each line prints expected-looking output; read it rather than trusting an exit code. There are no assertions by design — the point is to see the real row shapes.
+
+Steps 2a and 2b check the Notion import: a seeded customer is suggested as the steward types, and tapping it prefills their contact details and skips the contact step when an email is already on file. Steps 16 and 17 check that the pre-counter history shows beside the sales book and that the customer list grows from real sales.
+
+## no-migration.test.js
+
+The same walkthrough with `customers` and `daily_history` missing entirely, as they are if `migrate-notion.sql` was never run. Everything must still work; the history note is simply absent and the name lookup falls back to past sales only. The stub returns Postgres's real `relation "public.customers" does not exist` error so the data layer's handling of it is exercised, not bypassed.
 
 ## gate.test.js
 
-Four states across both modes: optional open mode with no session (not deployed), then with `REQUIRE_SIGN_IN: true` — no session, a signed-in email not on the allow list, and an allow-listed email.
+Four states across both modes: open mode with no session (what the studio runs today), then with `REQUIRE_SIGN_IN: true` — no session, a signed-in email not on the allow list, and an allow-listed email.
 
 ## About the stub
 

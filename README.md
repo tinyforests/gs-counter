@@ -61,3 +61,11 @@ Read [ARCHITECTURE.md](ARCHITECTURE.md) before changing the data mapping or stoc
 Customer names are required. The contact step asks for email first; phone and email remain optional. After a sale, staff can open a receipt in their mail app, copy its text, or add an email and save it onto the sale. Active sales can have a receipt opened again from the sales book. These actions prepare an email for manual sending; they do not send automatically. For the October 20 launch, sign-in is temporarily bypassed and public database access is enabled until 00:00 Wednesday 21 October 2026 (Melbourne). Both the page and database enforce this expiry automatically. Anyone can read and change sales, stock and customer contacts during this approved launch window. Receipt buttons open a draft in the device mail app; staff still press Send.
 
 The launch policy migration is `migrations/20261019_launch_access.sql`. The original steward policies remain active underneath it. No scheduled agent or automation is required for expiry. Reload an already-open device after deployment.
+
+## October 20 Notion integration
+
+The customer list supplies name suggestions and contact prefill. Suggestions with an email skip the contact step; phone-only records ask for email. Sales add new customers and fill missing details. Daily takings remain in `daily_history`, separate from real sale rows. Historical studio values remain unknown. Historical averages may include atypical entries; review the source logs before interpreting them. The counter comparison covers days with recorded sales, not all studio opening days.
+
+Only the schema migration is tracked under `migrations/20261020_customer_history_schema.sql`. The Notion export, data-bearing SQL and import generator are private local files under the ignored `private-import/` directory. Do not commit them or paste real contacts into tests.
+
+Customer lookup is approved for public access until 00:00 Wednesday 21 October 2026 (Melbourne), matching the launch window. Outside that window only allowlisted stewards can read or update customer records. The history table is read-only to the app and retains null studios.

@@ -209,7 +209,7 @@ window.addEventListener("error", e => {
     downloads: null,
     view: "sale", step: 0,
     studio: loadLocal("gs-studio"),
-    items: [], sales: [], moves: [],
+    items: [], sales: [], moves: [], customers: [], history: [],
     draft: freshDraft(),
     logFilter: "today", stockMode: null, counts: {}, scan: "",
     saving: false,
@@ -282,6 +282,14 @@ window.addEventListener("error", e => {
       S.items = all.filter(i => !i.archived)
         .sort((a,b) => (a.name||"").localeCompare(b.name||""));
       S.dbReady = true; safeRender();
+    }, err => { console.warn(err); });
+    db.collection("customers").onSnapshot(snap => {
+      S.customers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      safeRender();
+    }, err => { console.warn(err); });
+    db.collection("daily_history").onSnapshot(snap => {
+      S.history = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      safeRender();
     }, err => { console.warn(err); });
     db.collection("movements").orderBy("at","desc").limit(100).onSnapshot(snap => {
       S.moves = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -357,15 +365,28 @@ window.addEventListener("error", e => {
     return stepDone();
   }
 
-  /* known customers from past sales */
+  /* the name lookup: everyone on the customer list, plus anyone who's bought
+     here. Sales win on contact details, since they're the fresher source. */
   function knownCustomers(){
     const map = new Map();
-    for (const s of S.sales) {
-      if (!s.customerName || s.customerName === "Walk-in") continue;
+    for (const c of S.customers) {
+      if (!c.name) continue;
+      map.set(c.name.trim().toLowerCase(), {
+        id: c.id, name: c.name, phone: c.phone || "", email: c.email || "",
+        count: 0, note: c.note || "", onList: true,
+      });
+    }
+    for (const s of [...S.sales].sort((a,b) => a.createdAt - b.createdAt)) {
+      if (!s.customerName || s.voided) continue;
       const k = s.customerName.trim().toLowerCase();
       const cur = map.get(k);
-      if (!cur) map.set(k, { name: s.customerName, phone: s.phone||"", email: s.email||"", count: 1, last: s.createdAt });
-      else { cur.count++; if (!cur.phone && s.phone) cur.phone = s.phone; if (!cur.email && s.email) cur.email = s.email; }
+      if (!cur) {
+        map.set(k, { name: s.customerName, phone: s.phone||"", email: s.email||"", count: 1, note: "", onList: false });
+      } else {
+        cur.count++;
+        if (s.phone) cur.phone = s.phone;
+        if (s.email) cur.email = s.email;
+      }
     }
     return [...map.values()];
   }
@@ -387,12 +408,21 @@ window.addEventListener("error", e => {
       const known = knownCustomers();
       const q = $n.value.trim().toLowerCase();
       if (q.length < 2) { $sg.innerHTML = ""; return; }
-      const hits = known.filter(c => c.name.toLowerCase().includes(q)).slice(0,4);
-      $sg.innerHTML = hits.map((c,i) => `<button data-i="${i}"><span>${esc(c.name)}</span><small>${c.count} visit${c.count===1?"":"s"}</small></button>`).join("");
+      const hits = known.filter(c => c.name.toLowerCase().includes(q))
+        .sort((a,b) => (b.count - a.count) || a.name.localeCompare(b.name))
+        .slice(0,5);
+      $sg.innerHTML = hits.map((c,i) => {
+        const why = c.count ? `${c.count} visit${c.count===1?"":"s"}`
+          : c.email ? "on the list · has email"
+          : c.phone ? "on the list · phone only"
+          : "on the list";
+        return `<button data-i="${i}"><span>${esc(c.name)}</span><small>${why}</small></button>`;
+      }).join("");
       $sg.querySelectorAll("button").forEach(b => b.onclick = () => {
         const c = hits[+b.dataset.i];
         Object.assign(S.draft, { name: c.name, phone: c.phone, email: c.email });
-        S.step = 2; render();
+        S.step = c.email ? 2 : 1;   // no email on file? ask for one, it's the receipt
+        render();
       });
     };
     $n.oninput = () => { S.draft.name = $n.value; $next.disabled = !$n.value.trim(); drawSuggest(); };
@@ -577,8 +607,34 @@ window.addEventListener("error", e => {
       }
     }
     S.saving = false;
-    if (ok) { S.lastSale = Object.assign({ id: ref.id }, doc); S.step = 4; moveStockForSale(doc, 1); }
+    if (ok) {
+      S.lastSale = Object.assign({ id: ref.id }, doc);
+      S.step = 4;
+      moveStockForSale(doc, 1);
+      rememberCustomer(doc);
+    }
     render();
+  }
+
+  // a new face goes onto the customer list; a known one gets any detail we just learned
+  async function rememberCustomer(sale){
+    if (!S.db || !sale.customerName) return;
+    const name = sale.customerName.trim();
+    const existing = S.customers.find(c => (c.name||"").trim().toLowerCase() === name.toLowerCase());
+    try {
+      if (!existing) {
+        await S.db.collection("customers").add({
+          name, email: sale.email || null, phone: sale.phone || null,
+          fromNotion: false, shopKnown: true, since: dayKey(sale.createdAt),
+        });
+      } else {
+        const patch = {};
+        if (sale.email && !existing.email) patch.email = sale.email;
+        if (sale.phone && !existing.phone) patch.phone = sale.phone;
+        if (!existing.shopKnown) patch.shopKnown = true;
+        if (Object.keys(patch).length) await S.db.doc("customers/" + existing.id).update(patch);
+      }
+    } catch(e){ console.warn("couldn't update the customer list", e); }
   }
 
   /* ---------- receipt ---------- */
@@ -662,6 +718,7 @@ window.addEventListener("error", e => {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { toast("That email doesn't look right."); return; }
       S.lastSale.email = em;
       if (s.id) { try { await S.db.doc("sales/" + s.id).update({ email: em }); } catch(e){ toast("Saved for the receipt, but not onto the sale."); } }
+      rememberCustomer(Object.assign({}, S.lastSale, { email: em }));
       render();
       openReceipt(S.lastSale);
     };
@@ -681,6 +738,39 @@ window.addEventListener("error", e => {
     });
   }
 
+  // What the shop did before the counter existed, from the Notion steward logs.
+  // Daily totals only — no items or payment methods were ever recorded — so it
+  // sits beside the sales book rather than inside it.
+  function historyNote(live){
+    if (!S.history.length) return "";
+    const days = S.history.filter(h => typeof h.total === "number");
+    if (!days.length) return "";
+    const total = days.reduce((a,h) => a + h.total, 0);
+    const open = days.length;
+    const traded = days.filter(h => h.total > 0).length;
+    const perDay = total / open;
+    const sorted = days.map(h => h.day).sort();
+    const fmt = d => new Date(d).toLocaleDateString("en-AU", { month:"short", year:"numeric" });
+    const from = fmt(sorted[0]), to = fmt(sorted[sorted.length - 1]);
+    const span = from === to ? from : `${from} – ${to}`;
+
+    // compare like with like: average per open day, then against now
+    let compare = "";
+    if (live.length) {
+      const liveDays = new Set(live.map(s => dayKey(s.createdAt))).size;
+      if (liveDays && perDay > 0) {
+        const nowPerDay = live.reduce((a,s) => a + s.total, 0) / liveDays;
+        const pct = Math.round(((nowPerDay - perDay) / perDay) * 100);
+        compare = ` On recorded counter sale days: ${money(nowPerDay)} a day, ${pct === 0 ? "about the same" : (pct > 0 ? `${pct}% above` : `${Math.abs(pct)}% below`)} that.`;
+      }
+    }
+    return `<div class="banner" style="border-left-color:var(--brass);background:var(--panel)">
+      <b>Before the counter</b> — ${money(total)} over ${open} logged days (${traded} with a sale), ${esc(span)}, from the Notion steward logs.
+      That averages ${money(perDay)} a day.${compare}
+      <br><span class="t" style="font-family:var(--mono);font-size:12px">Daily totals only — Notion never recorded items or payment methods, and which studio took the money wasn't logged.</span>
+    </div>`;
+  }
+
   function renderLog(){
     if (!S.logStudio) S.logStudio = S.studio;
     const list = filteredSales(), live = list.filter(s => !s.voided);
@@ -698,6 +788,7 @@ window.addEventListener("error", e => {
         <div><b>${people}</b><span>named customers</span></div>
       </div>
       ${byMethod.length ? `<p class="note" style="margin-top:-10px;margin-bottom:16px;font-family:var(--mono)">${byMethod.map(([l,v]) => `${l} ${money(v)}`).join("  ·  ")}</p>` : ""}
+      ${historyNote(live)}
       <div>${list.length ? list.map(s => `
         <div class="sale ${s.voided?"voided":""}">
           <div class="row split"><span><b>${esc(s.customerName)}</b><span class="tag">${esc(methodLabel(s.method))}</span>${S.logStudio==="all"?`<span class="tag">${esc(studioName(s.studio))}</span>`:""}</span><span class="amt">${money(s.total)}</span></div>

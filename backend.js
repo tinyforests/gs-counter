@@ -29,11 +29,14 @@
              lines:"lines", itemCount:"item_count", total:"total", method:"method", note:"note", stewardId:"steward_id", voided:"voided" },
     movements: { at:"at_ms", studio:"studio", by:"by_steward", type:"type", itemId:"item_id", name:"name", qty:"qty",
                  before:"before_qty", after:"after_qty", note:"note", changed:"changed", netUnits:"net_units", detail:"detail" },
+    customers: { name:"name", email:"email", phone:"phone", note:"note", fromNotion:"from_notion",
+                 shopKnown:"shop_known", since:"since" },
+    daily_history: { day:"day", studio:"studio", total:"total", dayType:"day_type", source:"source" },
   };
   const NUMERIC = new Set(["price","total","qty","before","after","netUnits","lowAt","itemCount","changed","createdAt","at"]);
 
   function toDoc(table, row){
-    const m = MAPS[table], doc = { id: row.id };
+    const m = MAPS[table], doc = { id: table === "daily_history" ? row.day : row.id };
     for (const k in m) {
       let v = row[m[k]];
       if (v === null || v === undefined) continue;
@@ -50,18 +53,34 @@
   }
 
   /* ---------- live collections ---------- */
-  const cache = { items: [], sales: [], movements: [] };
-  const subs = { items: [], sales: [], movements: [] };
+  const cache = { items: [], sales: [], movements: [], customers: [], daily_history: [] };
+  const subs = { items: [], sales: [], movements: [], customers: [], daily_history: [] };
   const QUERY = {
     items:     q => q.order("sku", { ascending: true }),
     sales:     q => q.order("created_ms", { ascending: false }).limit(500),
     movements: q => q.order("at_ms", { ascending: false }).limit(100),
+    customers: q => q.order("name", { ascending: true }).limit(1000),
+    daily_history: q => q.order("day", { ascending: false }).limit(1000),
   };
   const snapshot = table => ({ docs: cache[table].map(d => ({ id: d.id, data: () => d })) });
 
   async function refetch(table){
     const { data, error } = await QUERY[table](sb.from(table).select("*"));
-    if (error) { subs[table].forEach(s => s.err && s.err(error)); return; }
+    // customers and daily_history only exist once migrate-notion.sql has been
+    // run, and that import is optional — a missing table is not a failure, the
+    // features that read it just stay empty.
+    if (error || !Array.isArray(data)) {
+      const optional = table === "customers" || table === "daily_history";
+      const missing = error && (error.code === "42P01" || error.code === "PGRST205" ||
+        /does not exist|could not find.*table/i.test(error.message || ""));
+      if (optional && (missing || !error)) {
+        cache[table] = [];
+        subs[table].forEach(s => s.cb(snapshot(table)));
+      } else {
+        subs[table].forEach(s => s.err && s.err(error || new Error("Invalid table response")));
+      }
+      return;
+    }
     cache[table] = data.map(r => toDoc(table, r));
     subs[table].forEach(s => s.cb(snapshot(table)));
   }
@@ -85,10 +104,11 @@
   }
 
   function docRef(table, id){
+    const pk = table === "daily_history" ? "day" : "id";
     return {
       id,
       async set(doc){
-        const { error } = await sb.from(table).insert(Object.assign({ id }, toRow(table, doc)));
+        const { error } = await sb.from(table).insert(Object.assign({ [pk]: id }, toRow(table, doc)));
         if (error) throw mkErr(error);
         await refetch(table);
       },
@@ -99,7 +119,7 @@
           const cur = (cache[table].find(d => d.id === id) || {}).stock || {};
           row.stock = Object.assign({}, cur, patch.stock);
         }
-        const { error } = await sb.from(table).update(row).eq("id", id);
+        const { error } = await sb.from(table).update(row).eq(pk, id);
         if (error) throw mkErr(error);
         await refetch(table);
       },

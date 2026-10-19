@@ -3,7 +3,7 @@
   "private": true,
   "description": "Tests for G&S Counter. The app itself has no dependencies; jsdom is only used here.",
   "scripts": {
-    "test": "node counter.test.js && node gate.test.js"
+    "test": "node counter.test.js && node gate.test.js && node no-migration.test.js"
   },
   "devDependencies": {
     "jsdom": "^26.0.0"
