@@ -69,3 +69,16 @@ The customer list supplies name suggestions and contact prefill. Suggestions wit
 Only the schema migration is tracked under `migrations/20261020_customer_history_schema.sql`. The Notion export, data-bearing SQL and import generator are private local files under the ignored `private-import/` directory. Do not commit them or paste real contacts into tests.
 
 Customer lookup is approved for public access until 00:00 Wednesday 21 October 2026 (Melbourne), matching the launch window. Outside that window only allowlisted stewards can read or update customer records. The history table is read-only to the app. Its studio was assigned to Mont Albert at Tyson’s request; this assignment is separate from the original Notion data.
+
+### Square catalogue import
+
+On 22 October 2026, 152 active products and their standard prices were imported
+from the Square CSV export dated 15 April 2026. Historical stock counts were
+excluded; stock starts untracked. Square's blank SKUs remain blank counter tag
+numbers. Descriptions and online-sale prices are not used by the counter.
+
+`python3 scripts/import-square.py /path/to/square.csv > import.sql` prepares a
+transactional import for Supabase. Stable UUIDs derived from Square variation
+tokens prevent duplicates when rerunning the same export. Existing rows, edited
+prices and stock are preserved. The initial migration is
+`migrations/20261022_square_products.sql`.
