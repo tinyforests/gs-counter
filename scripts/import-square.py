@@ -5,7 +5,6 @@ Stock snapshots are deliberately excluded; existing counter products are preserv
 """
 import csv
 import decimal
-import json
 import sys
 import uuid
 
@@ -13,7 +12,7 @@ NAMESPACE = uuid.UUID('c3fb378f-695a-421a-a8da-2674b89fba47')
 def quote(value):
     return "'" + str(value).replace("'", "''") + "'"
 
-def build(path):
+def build(path, update=False):
     with open(path, encoding='utf-8-sig', newline='') as source:
         rows = list(csv.DictReader(source))
     products = []
@@ -39,9 +38,9 @@ def build(path):
     if not products:
         raise ValueError('No active products')
     return ('-- Square product catalogue: %d active products. No stock snapshot imported.\n'
-            '-- Stable IDs make reruns safe; existing rows are never overwritten.\n'
+            '-- Stable IDs make reruns safe; existing rows are preserved unless --update is used.\n'
             'begin;\ninsert into public.items (id, name, price, stock) values\n' % len(products)
-            + ',\n'.join(products) + '\non conflict (id) do nothing;\ncommit;\n')
+            + ',\n'.join(products) + ('\non conflict (id) do update set name = excluded.name, price = excluded.price, archived = false;' if update else '\non conflict (id) do nothing;') + '\ncommit;\n')
 
 if __name__ == '__main__':
-    print(build(sys.argv[1]), end='')
+    print(build(sys.argv[1], update='--update' in sys.argv[2:]), end='')

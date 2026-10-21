@@ -82,3 +82,10 @@ transactional import for Supabase. Stable UUIDs derived from Square variation
 tokens prevent duplicates when rerunning the same export. Existing rows, edited
 prices and stock are preserved. The initial migration is
 `migrations/20261022_square_products.sql`.
+
+The fresh Square export downloaded on 22 October 2026 (filename stamped
+`2026-10-21-2107`) replaces the April catalogue: 189 current products, 39 added,
+five prices changed, and two April entries archived. Stock and tag numbers stay
+unchanged. `scripts/import-square.py export.csv --update` updates product names
+and prices while preserving stock and tag numbers. Missing products require
+explicit archival, as recorded in `20261022_square_catalogue_refresh.sql`.
