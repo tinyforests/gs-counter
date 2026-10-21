@@ -89,3 +89,8 @@ five prices changed, and two April entries archived. Stock and tag numbers stay
 unchanged. `scripts/import-square.py export.csv --update` updates product names
 and prices while preserving stock and tag numbers. Missing products require
 explicit archival, as recorded in `20261022_square_catalogue_refresh.sql`.
+
+At Tyson's request, the latest Square export's explicit stock quantities are
+assigned to Mont Albert (both Square locations combined): six tracked products,
+14 units. Blank quantities remain untracked. See
+`migrations/20261022_square_stock_mont_albert.sql`.
