@@ -94,3 +94,8 @@ At Tyson's request, the latest Square export's explicit stock quantities are
 assigned to Mont Albert (both Square locations combined): six tracked products,
 14 units. Blank quantities remain untracked. See
 `migrations/20261022_square_stock_mont_albert.sql`.
+
+One-off inventory default: on 22 October, untracked active products were set to
+one unit at Mont Albert. Explicit Square counts were retained. EVC Tee, Japanese
+Hand-Forged Garden Shears and Toyo Cantilever Toolbox are repeatable products;
+they retain their existing count or remain untracked pending a stocktake.
