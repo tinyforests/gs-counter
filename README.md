@@ -99,3 +99,18 @@ One-off inventory default: on 22 October, untracked active products were set to
 one unit at Mont Albert. Explicit Square counts were retained. EVC Tee, Japanese
 Hand-Forged Garden Shears and Toyo Cantilever Toolbox are repeatable products;
 they retain their existing count or remain untracked pending a stocktake.
+
+### Customer purchase history
+
+The item-selection screen includes a Customer history panel: non-voided counter
+sales show their saved date, studio, item names, quantities and actual line
+prices. Each new sale already stores the buyer's name/contact details together
+with immutable item-name/price snapshots and item IDs in `sales.lines`.
+
+On 22 October 2026, 19 sourced Notion customer/item relationships for 11 customers
+were added to their customer notes, with source URLs and linked visit dates.
+Staff/test records were excluded. Those relationships do not reliably establish
+item-level dates, quantities, payments or actual paid prices, so they are labelled
+as linked items and kept out of sales totals and stock movements. Daily takings
+remain separate. Original evidence and the pre-import customer-note backup are
+in ignored `private-import/`; personal histories are never committed here.

@@ -477,6 +477,21 @@ window.addEventListener("error", e => {
     if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
   }
 
+  // Purchase snapshots live on each sale; Notion links stay in customer notes
+  // because their payment amounts, quantities and item dates can be incomplete.
+  function customerHistory(name){
+    const key = name.trim().toLowerCase();
+    const customer = S.customers.find(c => (c.name || "").trim().toLowerCase() === key);
+    const sales = S.sales.filter(s => !s.voided && (s.customerName || "").trim().toLowerCase() === key)
+      .sort((a,b) => b.createdAt - a.createdAt);
+    if (!sales.length && !(customer && customer.note)) return "";
+    return `<details class="banner" id="customerHistory"><summary>Customer history — ${esc(name)}</summary>
+      ${sales.map(s => `<p><b>${esc(s.day || dayKey(s.createdAt))}</b> · ${esc((STUDIOS.find(st => st.id === s.studio) || {}).name || s.studio)}<br>
+        ${(s.lines || []).map(l => `${esc(l.name)} × ${esc(l.qty)} — ${money(l.price * l.qty)}`).join("<br>")}</p>`).join("")}
+      ${customer && customer.note ? `<p style="white-space:pre-wrap">${esc(customer.note)}</p>` : ""}
+      </details>`;
+  }
+
   function stepItems(){
     const d = S.draft;
     const qtyOf = id => (d.lines.find(l => l.itemId === id) || {}).qty || 0;
@@ -485,6 +500,7 @@ window.addEventListener("error", e => {
       ${stepBar(2)}
       <h1>What are they taking?</h1>
       <p class="lede">Tap an item, or type the number off its tag.</p>
+      ${customerHistory(d.name)}
       <div class="scanbar"><input id="scan" placeholder="Tag number or name" autocomplete="off" value="${esc(S.scan||"")}"></div>
       ${!S.dbReady ? `<div class="empty">Loading items…</div>` :
         visibleItems().length ? `<div class="items">${visibleItems().map(i => {
@@ -739,7 +755,7 @@ window.addEventListener("error", e => {
   }
 
   // What the shop did before the counter existed, from the Notion steward logs.
-  // Daily totals only — no items or payment methods were ever recorded — so it
+  // Daily totals stay separate; linked customer items appear in customer history. It
   // sits beside the sales book rather than inside it.
   function historyNote(live){
     if (!S.history.length) return "";

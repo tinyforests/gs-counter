@@ -4,7 +4,7 @@ const {JSDOM}=require('jsdom');const fs=require('fs');const path=require('path')
 const T={stewards:[{email:'hello@lundbech.me',name:'Tyson',role:'admin'}],items:[],sales:[],movements:[],
   // as migrate-notion.sql would leave them
   customers:[
-    {id:'c1',name:'Kim & Daryl Example',email:'kim@example.com',phone:'0400 000 001',note:null,from_notion:true,shop_known:false,since:'2025-11-05'},
+    {id:'c1',name:'Kim & Daryl Example',email:'kim@example.com',phone:'0400 000 001',note:'[Notion purchase links]\nVintage planter — price not recorded\n[/Notion purchase links]',from_notion:true,shop_known:false,since:'2025-11-05'},
     {id:'c2',name:'Lori',email:null,phone:'0400 000 002',note:null,from_notion:true,shop_known:true,since:'2026-03-27'}],
   daily_history:[
     {day:'2026-10-15',studio:'mont-albert',total:80,day_type:'Steady',source:'notion-steward-logs'},
@@ -85,7 +85,7 @@ const S_email=doc=>{const i=doc.getElementById('email');return i?(i.value||'(bla
   assert.equal(sug.length,1); assert.match(sug[0].textContent,/on the list · has email/);
   console.log('2a Notion customer suggested:', sug.map(b=>b.textContent.trim()));
   sug[0].click(); await wait(60);
-  assert.equal(d.getElementById('email'),null); assert.ok(d.getElementById('scan'));
+  assert.equal(d.getElementById('email'),null); assert.ok(d.getElementById('scan')); assert.match(d.getElementById('customerHistory').textContent,/Vintage planter/);
   console.log('2b after tapping it:', q('h1').textContent, '| email prefilled:', S_email(d));
   // back out to the name step (items -> contact -> name) and start a clean sale
   d.getElementById('back').click(); await wait(40);
@@ -151,6 +151,7 @@ const S_email=doc=>{const i=doc.getElementById('email');return i?(i.value||'(bla
   d.getElementById('lateEmail').value='daryl@example.com';
   d.getElementById('saveEmail').click(); await wait(250);
   const daryl=T.sales.find(x=>x.customer_name==='Daryl');
+  assert.ok(daryl.lines.length); assert.ok(daryl.lines.every(l => l.itemId && l.name && l.qty > 0 && Number.isFinite(l.price)));
   assert.equal(daryl.email,'daryl@example.com'); assert.ok(W.__mailto.includes('daryl'));
   console.log('14 email written back onto the sale:', daryl && daryl.email, '| receipt opened:', (W.__mailto||'').includes('daryl'));
   d.querySelector('[data-view="log"]').click(); await wait(60);
