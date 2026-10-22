@@ -66,6 +66,8 @@ input.small{width:100%;padding:12px;background:var(--panel);border:0;border-bott
 .actions{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
 .actions .btn:last-child{flex:1}
 
+.stocktake-actions{position:sticky;top:0;z-index:5;background:var(--bg);margin:0;padding:12px 0;border-bottom:1px solid var(--line)}
+
 /* suggestions */
 .suggest{border-top:1px solid var(--line);margin:-8px 0 18px}
 .suggest button{display:flex;justify-content:space-between;width:100%;text-align:left;padding:13px 4px;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer}
@@ -950,16 +952,17 @@ window.addEventListener("error", e => {
     $app.innerHTML = `
       <h2>Stocktake — ${esc(studioName(S.studio))}</h2>
       <p class="lede">Walk the shelves and type what's actually there. Leave a box empty to leave that item alone. Nothing saves until you press Save count.</p>
+      <div class="actions stocktake-actions" role="group" aria-label="Stocktake actions">
+        <button class="btn ghost" id="cancel">Cancel</button>
+        <button class="btn" id="save">Save count</button>
+      </div>
       ${S.items.length ? S.items.map(i => {
         const h = onHand(i);
         return `<div class="stock-row" data-id="${esc(i.id)}">
           <span class="nm">${esc(i.name)}<small>system says ${h === null ? "not tracked" : h}</small></span>
           <input class="cnt" inputmode="decimal" data-count="${esc(i.id)}" value="${S.counts[i.id] ?? ""}" placeholder="${h === null ? "—" : h}" aria-label="Counted ${esc(i.name)}">
         </div>`; }).join("") : `<div class="empty">Add items first under Items.</div>`}
-      <div class="actions">
-        <button class="btn ghost" id="cancel">Cancel</button>
-        <button class="btn" id="save">Save count</button>
-      </div>`;
+`;
     $app.querySelectorAll("[data-count]").forEach(inp => inp.oninput = () => { S.counts[inp.dataset.count] = inp.value; });
     document.getElementById("cancel").onclick = () => { S.stockMode = null; S.counts = {}; render(); };
     document.getElementById("save").onclick = async () => {
