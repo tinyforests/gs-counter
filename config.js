@@ -7,7 +7,7 @@ window.GS_CONFIG = {
   SUPABASE_ANON_KEY: "sb_publishable_l39cEER1HlCOOZ_rBXS9HQ_EElvijk5",
 
   REQUIRE_SIGN_IN: false,
-  PUBLIC_ACCESS_UNTIL: "2026-10-24T13:00:00Z", // 00:00 Sunday Oct 25 (Melbourne); open through Saturday.
+  PUBLIC_ACCESS_UNTIL: "2026-11-01T13:00:00Z", // 00:00 Monday Nov 2 (Melbourne); open through Sunday Nov 1.
 
   // Studios the counter can be set to. id is stored on every sale — don't rename ids later.
   STUDIOS: [
